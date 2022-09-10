@@ -22,3 +22,8 @@ else:
 print(crypted_alphabet)
 print(current_alphabet)
 print(uncrypted_alphabet)
+
+
+
+
+
