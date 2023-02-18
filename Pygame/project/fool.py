@@ -358,6 +358,7 @@ class Game:
         self.hands = []
         self.bito = []
         self.cards = deck
+        self.playing_decks_dict = {}
         self.hod = 0
         self.hod_dict = {}
         self.win = False
@@ -365,9 +366,9 @@ class Game:
         self.hodit = max(self.hands)
         print(f"\nПервым ходит: {self.hodit.name}")
         self.draw_decks()
-        while not self.win:
-            self.hoditb()
-            pygame.display.flip()
+
+        # Доделать playing decks dict - при атаке защите : {player: [cards], pc: [cards]}
+
 
     def add_decks(self, *args):
         self.hands.extend(args)
@@ -393,73 +394,75 @@ class Game:
             self.hodit = 'Pc'
         else:
             self.hodit = 'Player'
-        self.hod_dict[attack_sprite.card] = None
+        self.hod_dict[attack_sprite] = None
         self.hod += 1
 
         print(self.hod_dict)
 
 
     def defend_card(self, defending_sprite: Card_sprite):
-        defending_card = defending_sprite.card
-        attacking_card = self.hod_dict[list(self.hod_dict.keys())[self.hod]]
-        if defending_card > attacking_card:
-            self.hod_dict[attacking_card] = defending_card
+        # defending_card = defending_sprite.card
+        attacking_sprite = self.hod_dict[list(self.hod_dict.keys())[self.hod]]
+        if defending_sprite.card > attacking_sprite.card:
+            self.hod_dict[attacking_sprite] = defending_sprite
             self.hod += 1
         print(self.hod_dict)
 
+        # должна быть проверка чтобы не хватать карты другого игрока - OK
 
-
+    # Реализовать перетаскивание
+    # Реализовать стейты атаки и защиты
+    # Реализовать зону для карт
+    # Реализовать выкладку карт и сдвиг карт при добавлении новых
+    # Реализовать интерфейс
+    # Реализовать ход/ выбор карты компьютером, метод выкладки карты для защиты, атаки.
     def hoditb(self):
         # hodit = True
-        dragging = False
-        print(type(self.hodit))
-        try:
-            if self.hodit.name == 'Player':
-                while self.hodit.name == 'Player':
+        # dragging = False
+        # print(type(self.hodit))
+        # try:
+        if self.hodit.name == 'Player':
+            while self.hodit.name == 'Player':
+                # while self.hodit.name == 'Player':
                     # cr_x, cr_y = c_x + w, c_y + h
-                    for event in pygame.event.get():
-                        if event.type == pygame.QUIT:
-                            terminate()
-                        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                            curr_x, curr_y = event.pos
-                            _: Card_sprite
-                            for _ in card_sprites:
-                                card_x = _.rect.x
-                                card_y = _.rect.y
-                                if (card_x <= curr_x <= card_x + _.rect.width) and (
-                                        card_y <= curr_y <= card_y + _.rect.height):
-                                    shot_card = _.card
-                                    shot_deck = list(filter(lambda x: _.card in x.container, self.hands))[0].name
-                                    print(
-                                        f'Попал в карту {shot_card} колоды'
-                                        f' {shot_deck}')
-                                    if shot_deck == 'Player':
+                last_hod_user = list(self.hod_dict.keys())[-1] if self.hod_dict else None
+                last_hod_card = self.hod_dict[(self.hod_dict.keys())[-1]] if self.hod_dict else None
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        terminate()
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        curr_x, curr_y = event.pos
+                        _: Card_sprite
+                        for _ in card_sprites:
+                            card_x = _.rect.x
+                            card_y = _.rect.y
+                            if (card_x <= curr_x <= card_x + _.rect.width) and (
+                                    card_y <= curr_y <= card_y + _.rect.height):
+                                shot_card = _.card
+                                shot_deck = list(filter(lambda x: _.card in x.container, self.hands))[0].name
+                                print(
+                                    f'Попал в карту {shot_card} колоды'
+                                    f' {shot_deck}')
+                                if shot_deck == 'Player':
+                                    if last_hod_user.name == 'Player':
+                                        self.defend_card(_)
+                                    elif last_hod_user.name == 'Pc' or not self.hod_dict:
                                         self.attack_card(_)
-                                        # _.show_card()
-                                        # _.update()
-                                    # должна быть проверка чтобы не хватать карты другого игрока
-                    # Реализовать перетаскивание
-                    # Реализовать стейты атаки и защиты
-                    # Реализовать зону для карт
-                    # Реализовать выкладку карт и сдвиг карт при добавлении новых
-                    # Реализовать интерфейс
-                    # Реализовать ход/ выбор карты компьютером, метод выкладки карты для защиты, атаки.
+                                    print('Игрок сходил')
 
-                    screen.fill(pygame.Color('black'))
-                    all_sprites.draw(screen)
-                    card_sprites.draw(screen)
-                    pygame.display.flip()
-                print('Игрок сходил')
                 # hodit = False
-
                 self.hodit = list(filter(lambda x: x.name != 'Player', self.hands))[0]
                 print(self.hodit)
-            else:
-                print('Компьютер сходил')
-                self.hodit = list(filter(lambda x: x.name != 'Pc', self.hands))[0]
-        except AttributeError as e:
-            print(e)
-    # Проблема выдает что self.hodit это строка
+        else:
+            print('Компьютер сходил')
+            if not self.hod_dict:
+                pass
+
+            self.hodit = list(filter(lambda x: x.name != 'Pc', self.hands))[0]
+
+        print()
+
+    # Проблема выдает что self.hodit это строка - решено
 
 def terminate():
     pygame.quit()
@@ -489,11 +492,44 @@ if __name__ == '__main__':
     game = Game()
     ranning = True
     # start_screen()
-    while ranning:
+    while not game.win:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-
+        # game = self
+            if game.hodit.name == 'Player':
+                # while game.hodit.name == 'Player':
+                last_hod_user = list(game.hod_dict.keys())[-1] if game.hod_dict else None
+                last_hod_card = game.hod_dict[list(game.hod_dict.keys())[-1]] if game.hod_dict else None
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    curr_x, curr_y = event.pos
+                    _: Card_sprite
+                    for _ in card_sprites:
+                        card_x = _.rect.x
+                        card_y = _.rect.y
+                        if (card_x <= curr_x <= card_x + _.rect.width) and (
+                                card_y <= curr_y <= card_y + _.rect.height):
+                            shot_card = _.card
+                            shot_deck = list(filter(lambda x: _.card in x.container, game.hands))[0].name
+                            print(
+                                f'Попал в карту {shot_card} колоды'
+                                f' {shot_deck}')
+                            if shot_deck == 'Player':
+                                if last_hod_user is None:
+                                    game.attack_card(_)
+                                elif last_hod_user.name == 'Player':
+                                    game.defend_card(_)
+                                elif last_hod_user.name == 'Pc':
+                                    game.attack_card(_)
+                    print('Игрок сходил')
+                    # hodit = False
+                    game.hodit = list(filter(lambda x: x.name != 'Player', game.hands))[0]
+                    print(game.hodit)
+            else:
+                print('Компьютер сходил')
+                if not game.hod_dict:
+                    pass
+                game.hodit = list(filter(lambda x: x.name != 'Pc', game.hands))[0]
         screen.fill(pygame.Color('black'))
         all_sprites.draw(screen)
         card_sprites.draw(screen)
