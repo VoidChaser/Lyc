@@ -176,6 +176,9 @@ class Card:
     def get_num(self):
         return numses[self.str_num]
 
+    def __hash__(self):
+        return hash(self.num)
+
 
 No_cards = Card('нет', 'козырей')
 ruba = load_image('рубашка.png')
@@ -324,12 +327,39 @@ print(player_hand)
 print()
 
 
+class Card_sprite(pygame.sprite.Sprite):
+    def __init__(self, card: Card, x, y, show=False):
+        super().__init__(all_sprites, card_sprites)
+        self.card = card
+        self.shown = show
+        self.card_image = card.image
+        self.update()
+        self.rect = self.card_image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+    def show_card(self):
+        self.shown = not self.shown
+
+    def update(self):
+        if self.shown:
+            self.image = self.card_image
+        else:
+            self.image = ruba
+        # self.rect = self.image.get_rect()
+
+
+
+HOD_X = 250
+
+
 class Game:
     def __init__(self):
         self.hands = []
         self.bito = []
         self.cards = deck
         self.hod = 0
+        self.hod_dict = {}
         self.win = False
         self.add_decks(pc_hand, player_hand)
         self.hodit = max(self.hands)
@@ -357,45 +387,79 @@ class Game:
             y += 540
             print()
 
-    def hoditb(self):
-        hodit = True
-        dragging = False
+    def attack_card(self, attack_sprite: Card_sprite):
+        # print(self.hodit)
         if self.hodit.name == 'Player':
-            while hodit:
-                # cr_x, cr_y = c_x + w, c_y + h
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        terminate()
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                        curr_x, curr_y = event.pos
-                        for _ in card_sprites:
-                            card_x = _.rect.x
-                            card_y = _.rect.y
-                            if (card_x <= curr_x <= card_x + _.rect.width) and (
-                                    card_y <= curr_y <= card_y + _.rect.height):
-                                print(
-                                    f'Попал в карту {_.card} колоды'
-                                    f' {list(filter(lambda x: _.card in x.container, self.hands))[0].name}')
-                                # должна быть проверка чтобы не хватать карты другого игрока
-                # Реализовать перетаскивание
-                # Реализовать стейты атаки и защиты
-                # Реализовать зону для карт
-                # Реализовать выкладку карт и сдвиг карт при добавлении новых
-                # Реализовать интерфейс
-                # Реализовать ход/ выбор карты компьютером, метод выкладки карты для защиты, атаки.
-
-                screen.fill(pygame.Color('black'))
-                all_sprites.draw(screen)
-                card_sprites.draw(screen)
-                pygame.display.flip()
-            print('Игрок сходил')
-            hodit = False
-
-            self.hodit = list(filter(lambda x: x.name != 'Player', self.hands))[0]
+            self.hodit = 'Pc'
         else:
-            print('Компьютер сходил')
-            self.hodit = list(filter(lambda x: x.name != 'Pc', self.hands))[0]
+            self.hodit = 'Player'
+        self.hod_dict[attack_sprite.card] = None
+        self.hod += 1
 
+        print(self.hod_dict)
+
+
+    def defend_card(self, defending_sprite: Card_sprite):
+        defending_card = defending_sprite.card
+        attacking_card = self.hod_dict[list(self.hod_dict.keys())[self.hod]]
+        if defending_card > attacking_card:
+            self.hod_dict[attacking_card] = defending_card
+            self.hod += 1
+        print(self.hod_dict)
+
+
+
+    def hoditb(self):
+        # hodit = True
+        dragging = False
+        print(type(self.hodit))
+        try:
+            if self.hodit.name == 'Player':
+                while self.hodit.name == 'Player':
+                    # cr_x, cr_y = c_x + w, c_y + h
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            terminate()
+                        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                            curr_x, curr_y = event.pos
+                            _: Card_sprite
+                            for _ in card_sprites:
+                                card_x = _.rect.x
+                                card_y = _.rect.y
+                                if (card_x <= curr_x <= card_x + _.rect.width) and (
+                                        card_y <= curr_y <= card_y + _.rect.height):
+                                    shot_card = _.card
+                                    shot_deck = list(filter(lambda x: _.card in x.container, self.hands))[0].name
+                                    print(
+                                        f'Попал в карту {shot_card} колоды'
+                                        f' {shot_deck}')
+                                    if shot_deck == 'Player':
+                                        self.attack_card(_)
+                                        # _.show_card()
+                                        # _.update()
+                                    # должна быть проверка чтобы не хватать карты другого игрока
+                    # Реализовать перетаскивание
+                    # Реализовать стейты атаки и защиты
+                    # Реализовать зону для карт
+                    # Реализовать выкладку карт и сдвиг карт при добавлении новых
+                    # Реализовать интерфейс
+                    # Реализовать ход/ выбор карты компьютером, метод выкладки карты для защиты, атаки.
+
+                    screen.fill(pygame.Color('black'))
+                    all_sprites.draw(screen)
+                    card_sprites.draw(screen)
+                    pygame.display.flip()
+                print('Игрок сходил')
+                # hodit = False
+
+                self.hodit = list(filter(lambda x: x.name != 'Player', self.hands))[0]
+                print(self.hodit)
+            else:
+                print('Компьютер сходил')
+                self.hodit = list(filter(lambda x: x.name != 'Pc', self.hands))[0]
+        except AttributeError as e:
+            print(e)
+    # Проблема выдает что self.hodit это строка
 
 def terminate():
     pygame.quit()
@@ -410,25 +474,6 @@ class Cloth(pygame.sprite.Sprite):
         self.image.fill(pygame.Color('#41ac43'))
 
 
-class Card_sprite(pygame.sprite.Sprite):
-    def __init__(self, card: Card, x, y, show=False):
-        super().__init__(all_sprites, card_sprites)
-        self.card = card
-        self.shown = show
-        self.card_image = card.image
-        self.update()
-        self.rect.x = x
-        self.rect.y = y
-
-    def show_card(self):
-        self.shown = not self.shown
-
-    def update(self):
-        if self.shown:
-            self.image = self.card_image
-        else:
-            self.image = ruba
-        self.rect = self.image.get_rect()
 
 
 FPS = 50
