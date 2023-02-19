@@ -391,22 +391,31 @@ class Game:
     def attack_card(self, attack_sprite: Card_sprite):
         # print(self.hodit)
         if self.hodit.name == 'Player':
+            taken_card = player_hand.pop(player_hand.container.index(attack_sprite.card))
             self.hodit = 'Pc'
         else:
+            taken_card = pc_hand.pop(player_hand.container.index(attack_sprite.card))
             self.hodit = 'Player'
-        self.hod_dict[attack_sprite] = None
+
+        self.hod_dict[attack_sprite.card] = None
         self.hod += 1
 
-        print(self.hod_dict)
+        taken_card: Card_sprite
+        taken_card.show_card()
 
+        print(self.hod_dict)
 
     def defend_card(self, defending_sprite: Card_sprite):
         # defending_card = defending_sprite.card
         attacking_sprite = self.hod_dict[list(self.hod_dict.keys())[self.hod]]
         if defending_sprite.card > attacking_sprite.card:
-            self.hod_dict[attacking_sprite] = defending_sprite
+            self.hod_dict[attacking_sprite.card] = defending_sprite
             self.hod += 1
         print(self.hod_dict)
+
+
+    # def __repr__(self):
+    #     return f'Composite sprite of {self.card}'
 
         # должна быть проверка чтобы не хватать карты другого игрока - OK
 
@@ -515,6 +524,7 @@ if __name__ == '__main__':
                                 f'Попал в карту {shot_card} колоды'
                                 f' {shot_deck}')
                             if shot_deck == 'Player':
+                                print(last_hod_user)
                                 if last_hod_user is None:
                                     game.attack_card(_)
                                 elif last_hod_user.name == 'Player':
