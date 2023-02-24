@@ -150,24 +150,6 @@ class Card:
         # Ретёрн прерывает выполнение функции. Когда условие выполняется - выполнение прервется на значении - тру,
         # в остальных значениях, - фолс.
 
-        # if self.kozir:
-        #     if other.kozir:
-        #         if self.suit == other.suit and self.num == other.num:
-        #             return True
-        #         else:
-        #             return False
-        #     elif not other.kozir:
-        #         return False
-        #
-        # elif not self.kozir:
-        #     if other.kozir:
-        #         return False
-        #     elif not other.kozir:
-        #         if self.suit == other.suit and self.num == other.num:
-        #             return True
-        #         else:
-        #             return False
-
     def __lt__(self, other):
         if self.kozir:
             if other.kozir:
@@ -200,23 +182,6 @@ class Card:
 
         return False
 
-        # if self.kozir:
-        #     if other.kozir:
-        #         if self.suit == other.kozir and self.num < other.num:
-        #             return True
-        #         else:
-        #             return False
-        #     elif not other.kozir:
-        #         return False
-        #
-        # elif not self.kozir:
-        #     if other.kozir:
-        #         return True
-        #     elif not other.kozir:
-        #         if self.suit == other.suit and self.num < other.num:
-        #             return True
-        #         else:
-        #             return False
 
     def get_num(self):
         return numses[self.str_num]
@@ -289,11 +254,9 @@ class Hand:
             elif not self.kozirs_count:
                 return False
 
-    # Закинуть в класс игры.
     def __isub__(self, other):
         try:
             if self.hod is True:
-                # что-нибудь для анимации выкидывания карты и реализация пула карт в активной области игрового поля
                 attack_card = self.container.pop(other)
                 print(f'Нападает карта {attack_card}')
             else:
@@ -367,11 +330,6 @@ for _ in range(12):
         else:
             pc_hand += deck[_]
 
-# kozir_pos = 12
-# kozir = deck[kozir_pos]
-# while kozir.num == 'туз':
-#     kozir_pos += 1
-#     kozir = deck[kozir_pos]
 
 print(f"Выбранный козырь: {kozir}")
 print()
@@ -403,7 +361,6 @@ class Card_sprite(pygame.sprite.Sprite):
             self.image = self.card_image
         else:
             self.image = ruba
-        # self.rect = self.image.get_rect()
 
 
 HOD_X = 250
@@ -418,18 +375,9 @@ class Game:
         self.hod_dict = {}
         self.hod = 0
         self.win = False
-        # self.last_hod_user = None
-        # self.last_hod_card = None
         self.add_decks(pc_hand, player_hand)
         self.init_and_draw_decks()
 
-        # self.begin_hod(first_hod=True)
-        # self.hands = []
-        # self.bito = []
-        # self.playing_decks_dict = {}
-        # self.playing_decks_dict = {}, {}
-
-        # Доделать playing decks dict - при атаке защите : {player: [cards], pc: [cards]}
 
     def get_index_user_name(self, pos=-1):
         if not self.hod_dict:
@@ -438,10 +386,6 @@ class Game:
         last_dict_hod = list(self.hod_dict.keys())[pos]
         return self.get_involved_hand(last_dict_hod).name
 
-        # if self.hod_dict[last_dict_hod] is None:
-        #     return self.get_involved_hand(last_dict_hod).name
-        # else:
-        #     return self.get_involved_hand(self.hod_dict[last_dict_hod]).name
         # Изменил возвращаемое значение функции на именно имя ключа из словаря, как имени пользователя, а не значения.
 
     def get_last_user_name(self):
@@ -456,13 +400,10 @@ class Game:
     def init_and_draw_decks(self):
         y = 60
         for hand in self.hands:
-            # hand = self.hands[0]
             for _, it_card in enumerate(hand):
-                # print(_ * WIDTH // hand.count_cards, it_card)
                 if hand.name == 'Player':
                     Card_sprite(it_card, 80 // hand.count_cards + _ * WIDTH // hand.count_cards, y,
                                 show=True)
-                    # print(new_card.rect.width)
                 else:
                     Card_sprite(it_card, 80 // hand.count_cards + _ * WIDTH // hand.count_cards, y)
             y += 540
@@ -471,19 +412,12 @@ class Game:
     def draw_decks(self):
         y = 60
         for hand in self.hands:
-            # hand = self.hands[0]
             for _, it_card in enumerate(hand):
-                # print(_ * WIDTH // hand.count_cards, it_card)
                 if hand.name == 'Player':
                     it_card.image.rect.move(80 // hand.count_cards + _ * WIDTH // hand.count_cards, y)
-                    # new_card = Card_sprite(it_card, 80 // hand.count_cards + _ * WIDTH // hand.count_cards, y,
-                    #                        show=True)
-                    # print(new_card.rect.width)
                 else:
                     it_card.image.rect.move(80 // hand.count_cards + _ * WIDTH // hand.count_cards, y)
                     it_card.image.shown = False
-                    # pass
-                    # new_card = Card_sprite(it_card, 80 // hand.count_cards + _ * WIDTH // hand.count_cards, y)
             y += 540
             print()
 
@@ -497,8 +431,6 @@ class Game:
                 used_hand = game.get_involved_hand(_)
                 used_hand.pop(used_hand.index(_))
 
-        # all_sprites.draw(screen)
-        # all_sprites.update()
         self.draw_decks()
 
         self.hod_dict = {}
@@ -517,39 +449,23 @@ class Game:
     # Должны убираться карты, раздаваться по порядку недостающие карты. Обновляться бито.
 
     def attack_card(self, attack_card: Card):
-        # print(self.hodit)
         if self.hodit.name == 'Player':
             taken_card_sprite = player_hand[player_hand.container.index(attack_card)].image
-            # self.hodit = 'Pc'
         else:
             taken_card_sprite = pc_hand[pc_hand.container.index(attack_card)].image
-            # self.hodit = 'Player'
             taken_card_sprite.show_card()
-
         self.hod_dict[attack_card] = None
-        # self.hod += 1
-
-        # taken_card: Card_sprite
-
         taken_card_sprite.update()
 
-        # print(self.hod_dict)
 
     def defend_card(self, defending_card: Card):
         if self.hodit.name == 'Player':
-            # taken_card_sprite = player_hand[player_hand.container.index(defending_card)].image
             self.hodit = 'Pc'
         else:
-            # taken_card = pc_hand[pc_hand.container.index(defending_card)].image
             defending_card.image.show_card()
-            # self.hodit = 'Player'
-
         self.hod_dict[list(self.hod_dict.keys())[-1]] = defending_card
-        # self.hod += 1
-
         defending_card.image.update()
 
-        # print(self.hod_dict)
 
     def get_involved_hand(self, card):
         return list(filter(lambda x: card in x, self.hands))[0]
@@ -586,9 +502,6 @@ class Interface_Sprite(pygame.sprite.Sprite):
         self.font_size = font_size
         self.x, self.y = x, y
 
-        # self.rect = self.image.get_rect()
-        # self.image.fill(pygame.Color('#41ac43'))
-        # screen.fill((0, 0, 0))
         self.image = pygame.Surface((WIDTH, HEIGHT))
 
         self.font = pygame.font.Font(None, font_size)
@@ -596,23 +509,12 @@ class Interface_Sprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
         self.update()
-        # self.rect = (x, y, text_w + 20, text_h + 20)
-        # self.image.blit(text, (text_x, text_y))
-        # pygame.draw.rect(screen, (0, 255, 0), (text_x - 10, text_y - 10,
-        #                                        text_w + 20, text_h + 20), 1)
-        # self.font = pygame.font.SysFont("Arial", size)
-        # self.textSurf = self.font.render(text, 1, color)
-        # self.image = pygame.Surface((width, height))
-        # W = self.textSurf.get_width()
-        # H = self.textSurf.get_height()
-        # self.image.blit(self.textSurf, [width / 2 - W / 2, height / 2 - H / 2])
 
     # low_font = pygame.font.Font('Arial', 10)
     # middle_font = pygame.font.Font('Arial', 20)
 
     def redraw_text(self):
         self.image = pygame.Surface((WIDTH, HEIGHT))
-        # font = pygame.font.Font(None, self.font_size)
         self.image = self.font.render(self.text, False, (pygame.Color(255, 255, 255)))
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = self.x, self.y
@@ -622,10 +524,6 @@ class Interface_Sprite(pygame.sprite.Sprite):
             if new_text is not None:
                 self.text = new_text
         self.redraw_text()
-        # self.redraw_text()
-        # else:
-        #     if new_text:
-        #         self.text = new_text[0]
 
 
 def formated_hod_return():
@@ -651,25 +549,12 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-
-            # if
-            # game.last_hod_user = None
-            # game.last_hod_card = None
-            # game = self
-            # last_hod_user = game.get_involved_hand(list(game.hod_dict.keys())[-1]) if game.hod_dict else None
-            # first_round_user = game.get_first_user_name()
-
-            # if last_hod_user is None and last_hod_card is None:
-            # last_hod_card = game.hod_dict[list(game.hod_dict.keys())[-1]] if game.hod_dict else None
             # Поправил потому что последняя карта это та, которую будут класть,
             # в иных случаях надо смотреть на первую карту.
             fair_play = True
             all_hod_used_cards = [*list(game.hod_dict.keys()), *list(game.hod_dict.values())]
             all_hod_used_cards = list(filter(lambda x: x is not None, all_hod_used_cards))
-            # game.first_round_user = first_round_user
             if game.hodit.name == 'Player':
-                # print(f'\nХодит Player:\n')
-                # while game.hodit.name == 'Player':
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     curr_x, curr_y = event.pos
                     _: Card_sprite
@@ -696,10 +581,6 @@ if __name__ == '__main__':
                                     else:
                                         print(f'Картой {shot_card} уже ходили.')
                                         fair_play = False
-
-                                    # if last_hod_user == 'Pc':
-                                    #     game.attack_card(shot_card)
-                                    #     print(f'Компьютер атакует картой {shot_card}.\n')
                                     # Если первым ходил, игрок, то в раунде игрок будет только атаковать.
                                     # Поэтому убрал условие.
 
@@ -720,19 +601,11 @@ if __name__ == '__main__':
                             else:
                                 print('Вы не выбрали вашу карту')
                                 fair_play = False
-                                # print(last_hod_user)
-                                # if last_hod_user is None:
-                                #     game.attack_card(_.card)
-                                # elif last_hod_user.name == 'Player':
-                                #     game.defend_card(_.card)
-                                # elif last_hod_user.name == 'Pc':
-                                #     game.defend_card(_.card)
                             if fair_play:
                                 print('Игрок сходил\n')
 
                                 # hodit = False
                                 game.hodit = list(filter(lambda x: x.name != 'Player', game.hands))[0]
-                                # print(game.hodit)
                                 print()
             else:
 
@@ -744,7 +617,6 @@ if __name__ == '__main__':
 
                 elif game.first_round_user == 'Player':
                     player_played_card = list(game.hod_dict.keys())[-1]
-                    # print(player_played_card)
                     possible_cards_to_defend = list(
                         filter(lambda x: x > player_played_card and x not in all_hod_used_cards, pc_hand))
 
@@ -759,16 +631,7 @@ if __name__ == '__main__':
                         # Берёт.
 
                 print('Компьютер сходил\n')
-
-                # if last_hod_user is None or last_hod_user.name == 'Pc':
-                #     game.attack_card(card_to_attack)
-                #
-                # elif last_hod_user.name == 'Player':
-
-                # card_to_play = list(filter)
                 print(f'Состояние раунда на данный момент:\n {game.hod_dict}')
-                # print()
-
                 game.hodit = list(filter(lambda x: x.name != 'Pc', game.hands))[0]
                 print(f'\nХодит {game.hodit.name}:\n')
 
