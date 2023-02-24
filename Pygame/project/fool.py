@@ -62,7 +62,7 @@ def start_screen():
     screen = pygame.display.set_mode((800, 800))
     fon = pygame.transform.scale(load_image('sukno.jpg'), (800, 800))
     screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 20)
+    font = pygame.font.Font('Arial', 20)
     text_coord = 10
     for line in intro_text:
         string_rendered = font.render(line, 1, pygame.Color('White'))
@@ -81,9 +81,6 @@ def start_screen():
                 return  # начинаем игру
         pygame.display.flip()
         clock.tick(FPS)
-
-
-
 
 
 def load_image(name, colorkey=None):
@@ -246,7 +243,6 @@ class Hand:
         item_to_ret = self.container.pop(index)
         return item_to_ret
 
-
     def recount(self):
         global kozir
         self.count_cards = len(self.container)
@@ -316,6 +312,12 @@ class Hand:
     def __getitem__(self, item):
         return self.container[item]
 
+    def __index__(self, element):
+        return self.container.index(element)
+
+    def index(self, element):
+        return self.container.index(element)
+
     def __iter__(self):
         return iter(self.container)
 
@@ -326,9 +328,6 @@ class Hand:
     def __repr__(self):
         return f"Колода {self.name}:\n Карт: {self.count_cards},\n карты: " + ', '.join(list(
             map(str, self.container))) + f',\n Козырей: {self.kozirs_count}, Наивысший козырь: {self.highest_kozir}'
-
-    # def check_first_hod(self, *hands): - закинуть в класс игры
-    # реализовать методы сравнения колод
 
 
 suits = ['пик', 'черви', 'буби', 'крести']
@@ -368,11 +367,11 @@ for _ in range(12):
         else:
             pc_hand += deck[_]
 
-kozir_pos = 12
-kozir = deck[kozir_pos]
-while kozir.num == 'туз':
-    kozir_pos += 1
-    kozir = deck[kozir_pos]
+# kozir_pos = 12
+# kozir = deck[kozir_pos]
+# while kozir.num == 'туз':
+#     kozir_pos += 1
+#     kozir = deck[kozir_pos]
 
 print(f"Выбранный козырь: {kozir}")
 print()
@@ -407,12 +406,13 @@ class Card_sprite(pygame.sprite.Sprite):
         # self.rect = self.image.get_rect()
 
 
-
 HOD_X = 250
 
 
 class Game:
     def __init__(self):
+        self.first_round_user = None
+        self.hodit = None
         self.hands, self.bito = [], []
         self.cards = deck
         self.hod_dict = {}
@@ -421,7 +421,7 @@ class Game:
         # self.last_hod_user = None
         # self.last_hod_card = None
         self.add_decks(pc_hand, player_hand)
-        self.draw_decks()
+        self.init_and_draw_decks()
 
         # self.begin_hod(first_hod=True)
         # self.hands = []
@@ -456,6 +456,21 @@ class Game:
     def add_decks(self, *args):
         self.hands.extend(args)
 
+    def init_and_draw_decks(self):
+        y = 60
+        for hand in self.hands:
+            # hand = self.hands[0]
+            for _, it_card in enumerate(hand):
+                # print(_ * WIDTH // hand.count_cards, it_card)
+                if hand.name == 'Player':
+                    Card_sprite(it_card, 80 // hand.count_cards + _ * WIDTH // hand.count_cards, y,
+                                show=True)
+                    # print(new_card.rect.width)
+                else:
+                    Card_sprite(it_card, 80 // hand.count_cards + _ * WIDTH // hand.count_cards, y)
+            y += 540
+            print()
+
     def draw_decks(self):
         y = 60
         for hand in self.hands:
@@ -463,15 +478,34 @@ class Game:
             for _, it_card in enumerate(hand):
                 # print(_ * WIDTH // hand.count_cards, it_card)
                 if hand.name == 'Player':
-                    new_card = Card_sprite(it_card, 80 // hand.count_cards + _ * WIDTH // hand.count_cards, y,
-                                           show=True)
+                    it_card.image.rect.move(80 // hand.count_cards + _ * WIDTH // hand.count_cards, y)
+                    # new_card = Card_sprite(it_card, 80 // hand.count_cards + _ * WIDTH // hand.count_cards, y,
+                    #                        show=True)
                     # print(new_card.rect.width)
                 else:
-                    new_card = Card_sprite(it_card, 80 // hand.count_cards + _ * WIDTH // hand.count_cards, y)
+                    it_card.image.rect.move(80 // hand.count_cards + _ * WIDTH // hand.count_cards, y)
+                    it_card.image.shown = False
+                    # pass
+                    # new_card = Card_sprite(it_card, 80 // hand.count_cards + _ * WIDTH // hand.count_cards, y)
             y += 540
             print()
 
+    # Баг по ресурсам изображений: 9 буби = 9 черви.
     def begin_round(self, first_hod=False):
+        # global cloth
+
+        # В идеале, чисто, перед тем, как начинать раунд,
+        # должны все по очереди добирать карт до 6, и должны перерисовываться колоды.
+        if all_hod_used_cards:
+            for _ in all_hod_used_cards:
+                used_hand = game.get_involved_hand(_)
+                used_hand.pop(used_hand.index(_))
+
+        # all_sprites.draw(screen)
+        # all_sprites.update()
+        self.draw_decks()
+        # Баг спрайтов - остаются старые после реинициализации хода.
+
         self.hod_dict = {}
         if not first_hod:
             self.hodit = list(filter(lambda x: x != self.hodit, self.hands))[0]
@@ -480,6 +514,7 @@ class Game:
             self.hodit = max(self.hands)
             print(f"\nПервым ходит {self.hodit.name}:\n")
         self.first_round_user = self.hodit.name
+        interface_sprites.update(self.first_round_user)
 
     def end_round(self):
         pass
@@ -507,10 +542,10 @@ class Game:
 
     def defend_card(self, defending_card: Card):
         if self.hodit.name == 'Player':
-            taken_card_sprite = player_hand[player_hand.container.index(defending_card)].image
+            # taken_card_sprite = player_hand[player_hand.container.index(defending_card)].image
             self.hodit = 'Pc'
         else:
-            taken_card = pc_hand[pc_hand.container.index(defending_card)].image
+            # taken_card = pc_hand[pc_hand.container.index(defending_card)].image
             defending_card.image.show_card()
             # self.hodit = 'Player'
 
@@ -523,15 +558,6 @@ class Game:
 
     def get_involved_hand(self, card):
         return list(filter(lambda x: card in x, self.hands))[0]
-
-    # должна быть проверка чтобы не хватать карты другого игрока - OK
-    # Реализовать перетаскивание
-    # Реализовать стейты атаки и защиты
-    # Реализовать зону для карт
-    # Реализовать выкладку карт и сдвиг карт при добавлении новых
-    # Реализовать интерфейс
-    # Реализовать ход/ выбор карты компьютером, метод выкладки карты для защиты, атаки.
-    # Проблема выдает что self.hodit это строка - решено
 
 
 def terminate():
@@ -550,17 +576,86 @@ class Cloth(pygame.sprite.Sprite):
 FPS = 50
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
+interface_sprites = pygame.sprite.Group()
 card_sprites = pygame.sprite.Group()
-# c_x, c_y = 0, 0
-# w, h = 10, 10
+
+Card_sprite(kozir, 720, 300,
+            show=True)
+
+
+class Interface_Sprite(pygame.sprite.Sprite):
+    def __init__(self, text, x, y, text_changable=False, font_size=25):
+        super().__init__(all_sprites, interface_sprites)
+        self.text = text
+        self.text_changable = text_changable
+        self.font_size = font_size
+        self.x, self.y = x, y
+
+        # self.rect = self.image.get_rect()
+        # self.image.fill(pygame.Color('#41ac43'))
+        # screen.fill((0, 0, 0))
+        self.image = pygame.Surface((WIDTH, HEIGHT))
+
+        self.font = pygame.font.Font(None, font_size)
+        self.image = self.font.render(self.text, False, (pygame.Color(255, 255, 255)))
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x, y
+        self.update()
+        # self.rect = (x, y, text_w + 20, text_h + 20)
+        # self.image.blit(text, (text_x, text_y))
+        # pygame.draw.rect(screen, (0, 255, 0), (text_x - 10, text_y - 10,
+        #                                        text_w + 20, text_h + 20), 1)
+        # self.font = pygame.font.SysFont("Arial", size)
+        # self.textSurf = self.font.render(text, 1, color)
+        # self.image = pygame.Surface((width, height))
+        # W = self.textSurf.get_width()
+        # H = self.textSurf.get_height()
+        # self.image.blit(self.textSurf, [width / 2 - W / 2, height / 2 - H / 2])
+
+    # low_font = pygame.font.Font('Arial', 10)
+    # middle_font = pygame.font.Font('Arial', 20)
+
+    def redraw_text(self):
+        self.image = pygame.Surface((WIDTH, HEIGHT))
+        # font = pygame.font.Font(None, self.font_size)
+        self.image = self.font.render(self.text, False, (pygame.Color(255, 255, 255)))
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = self.x, self.y
+
+    def update(self, new_text=None):
+        if self.text_changable:
+            if new_text is not None:
+                self.text = new_text
+        self.redraw_text()
+        # self.redraw_text()
+        # else:
+        #     if new_text:
+        #         self.text = new_text[0]
+
+
+def formated_hod_return():
+    return f'Сейчас ходит: {game.hodit.name}'
+
 
 if __name__ == '__main__':
     pygame.display.set_caption('The fool')
     cloth = Cloth()
     game = Game()
+
+    all_hod_used_cards = list()
     game.begin_round(first_hod=True)
     running = True
     # start_screen()
+    # Пока проект не доделан заставка закомментирована.
+    game_name = Interface_Sprite('Дурак by tr', 330, 5)
+    pc_hand_name = Interface_Sprite('Колода Pc', 30, 30, font_size=30)
+    player_hand_name = Interface_Sprite('Колода Player', 15, 570, font_size=30)
+    # hod_indicator = Interface_Sprite('Ходит:', 600, 30, font_size=30)
+
+    # Доделать индикатор хода и его апдтейт
+    # Баг: Индикатор хода не работает и не обновляет значение.
+    # Баг: Туда же и баг со спрайтами, которые не обновляются.
+
     while not game.win:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -579,7 +674,7 @@ if __name__ == '__main__':
             # в иных случаях надо смотреть на первую карту.
             fair_play = True
             all_hod_used_cards = [*list(game.hod_dict.keys()), *list(game.hod_dict.values())]
-            # game = self
+            all_hod_used_cards = list(filter(lambda x: x is not None, all_hod_used_cards))
             # game.first_round_user = first_round_user
             if game.hodit.name == 'Player':
                 # print(f'\nХодит Player:\n')
@@ -596,19 +691,19 @@ if __name__ == '__main__':
                             shot_deck_name = list(filter(lambda x: _.card in x.container, game.hands))[0].name
                             # Несостыковка. Похоже что использование pop для выкидывания
                             # использованной уже карты из учёта карт для выбора - плохая идея,
-                            # и стоит учитывать то, что использованные карты выбирать не нужно,
-                            # - путём их убирания из possible_cards_to_..., а после уж и методом pop.
+                            # и стоит учитывать то, что использованные карты выбирать не нужно,-
+                            # путём их убирания из possible_cards_to_..., а после уж и методом pop.
                             print(
-                                f'Попал в карту {shot_card} колоды'
+                                f'Выбрана карта {shot_card} колоды'
                                 f' {shot_deck_name}')
                             if shot_deck_name == 'Player':
                                 if game.first_round_user == 'Player' or game.first_round_user is None:
                                     # if shot_card
-                                    if shot_card not in list(game.hod_dict.keys()) and shot_card not in list(
-                                            game.hod_dict.values()):
+                                    if shot_card not in all_hod_used_cards:
                                         game.attack_card(shot_card)
                                         print(f'Игрок атакует картой {shot_card}.\n')
                                     else:
+                                        print(f'Картой {shot_card} уже ходили.')
                                         fair_play = False
 
                                     # if last_hod_user == 'Pc':
@@ -618,19 +713,21 @@ if __name__ == '__main__':
                                     # Поэтому убрал условие.
 
                                 elif game.first_round_user == 'Pc':
-                                    pc_played_card = game.hod_dict[list(game.hod_dict.keys())[-1]]
+                                    pc_played_card = list(game.hod_dict.keys())[-1]
                                     if shot_card > pc_played_card:
-                                        if shot_card not in list(game.hod_dict.values()) and shot_card not in list(
-                                                game.hod_dict.keys()):
+                                        if shot_card not in all_hod_used_cards:
                                             game.defend_card(shot_card)
                                             print(f'Игрок защищается от {pc_played_card} картой {shot_card}.\n')
                                         else:
+                                            print(f'Картой {shot_card} уже ходили.')
                                             fair_play = False
                                     else:
+                                        print(f'Этой картой нельзя защититься.'
+                                              f' Она меньше по значению либо не подходит по масти.')
                                         fair_play = False
-                                # Реализовать ветвление в нажатие на кнопку брать, если нет возможных для хода карт,
-                                # и проверку на то, что игрок может сходить.
+
                             else:
+                                print('Вы не выбрали вашу карту')
                                 fair_play = False
                                 # print(last_hod_user)
                                 # if last_hod_user is None:
@@ -649,7 +746,8 @@ if __name__ == '__main__':
             else:
 
                 if game.first_round_user == 'Pc' or game.first_round_user is None:
-                    card_to_attack = min(pc_hand, key=lambda x: x.num)
+                    card_to_attack = min(list(filter(lambda x: x not in all_hod_used_cards, pc_hand)),
+                                         key=lambda x: x.num)
                     game.attack_card(card_to_attack)
                     print(f'Компьютер атакует картой {card_to_attack}.\n')
 
@@ -668,14 +766,9 @@ if __name__ == '__main__':
                     else:
                         print(f'Компьютер берёт.\n')
                         game.begin_round()
-                        # Реализовать набор карт со стола. Разбивку словаря с картами на их список,
-                        # добор этих карт в руку игрока или пк, дорисовку их потом.
-                        # А также обновление статусов рубашек карт.
+                        # Берёт.
 
                 print('Компьютер сходил\n')
-
-                # Берёт.
-                # Реализовать функцию добора.
 
                 # if last_hod_user is None or last_hod_user.name == 'Pc':
                 #     game.attack_card(card_to_attack)
@@ -691,11 +784,34 @@ if __name__ == '__main__':
 
                 print()
 
-
-        #Доделал возможноти хода и ходы компьютера.
-        # Баг: Последнее значение для хода меняется на первое для следующего -> не создается новая запись в словаре, а меняется последняя
         screen.fill(pygame.Color('black'))
+        all_sprites.update()
         all_sprites.draw(screen)
         card_sprites.draw(screen)
+        interface_sprites.draw(screen)
         pygame.display.flip()
+
+    # TODO: Реализовать зону для карт.
+    #     Реализовать интерфейс.
+    #     Реализовать выкладку карт и сдвиг карт при добавлении новых.
+    #     Реализовать набор карт со стола. Разбивку словаря с картами на их список,
+    #     добор этих карт в руку игрока или пк, дорисовку их потом.
+    #     А также обновление статусов рубашек карт.
+    #     Реализовать функцию добора.
+    #     Реализовать ветвление в нажатие на кнопку брать, если нет возможных для хода карт,
+    #     и проверку на то, что игрок может сходить.
+    #     Реализовать экземпляр класса карт/интерфейсов - бито,
+    #     которое является одной картой с цифрой,- количеством карт, оставшихся в колоде.
+    #     В случае отсутствия таких, кроме козыря - убирать. Плюс учесть то, что козырь тоже часть бито.
+
+    # Баг: Последнее значение для хода меняется на первое для следующего -> не создается новая запись в словаре,
+    # а меняется последняя - Исправлен. - готово.
+    # Должна быть проверка чтобы не хватать карты другого игрока - готово.
+    # Реализовать перетаскивание - Не нужно. Сделал через тапы. - готово.
+    # Реализовать стейты атаки и защиты - готово.
+    # Реализовать ход/ выбор карты компьютером, метод выкладки карты для защиты, атаки. - готово.
+    # Проблема выдает что self.hodit это строка - готово.
+    # def check_first_hod(self, *hands): - закинуть в класс игры - готово.
+    # реализовать методы сравнения колод - готово.
+
     pygame.quit()
