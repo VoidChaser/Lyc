@@ -322,19 +322,9 @@ first_player_is_first = False
 for _ in range(6):
     pc_hand += deck.pop()
     player_hand += deck.pop()
-
-# for _ in range(12):
-#     if first_player_is_first:
-#         if _ % 2 != 0:
-#             pc_hand += deck[_]
-#         else:
-#             player_hand += deck[_]
-#     else:
-#         if _ % 2 != 0:
-#             player_hand += deck[_]
-#         else:
-#             pc_hand += deck[_]
-
+print(deck)
+deck.pop(deck.index(kozir))
+deck.insert(0, kozir)
 
 print(f"Выбранный козырь: {kozir}")
 print()
@@ -369,165 +359,6 @@ class Card_sprite(pygame.sprite.Sprite):
 
     def __repr__(self):
         return f'Спрайт карты {self.card}'
-
-
-HOD_X = 250
-
-
-class Game:
-    def __init__(self):
-        self.first_round_user = None
-        self.hodit = None
-        self.hands, self.bito = [], []
-        self.cards = deck
-        self.hod_dict = {}
-        self.hod = 0
-        self.win = False
-        self.add_decks(pc_hand, player_hand)
-        self.init_and_draw_decks()
-
-    def get_index_user_name(self, pos=-1):
-        if not self.hod_dict:
-            return None
-
-        last_dict_hod = list(self.hod_dict.keys())[pos]
-        return self.get_involved_hand(last_dict_hod).name
-
-        # Изменил возвращаемое значение функции на именно имя ключа из словаря, как имени пользователя, а не значения.
-
-    def get_last_user_name(self):
-        return self.get_index_user_name()
-
-    def get_first_user_name(self):
-        return self.get_index_user_name(0)
-
-    def add_decks(self, *args):
-        self.hands.extend(args)
-
-    def init_and_draw_decks(self):
-        for _ in self.hands:
-            _.recount()
-            # print(_)
-        y = 60
-        for hand in self.hands:
-            for _, it_card in enumerate(hand):
-                if hand.name == 'Player':
-                    # Card_sprite(it_card, WIDTH // 5 // hand.count_cards + _ * WIDTH // hand.count_cards, y,
-                    #             show=True)
-                    Card_sprite(it_card, 5 + _ * WIDTH // hand.count_cards, y,
-                                show=True)
-                else:
-                    # Card_sprite(it_card, WIDTH // 5 // hand.count_cards + _ * WIDTH // hand.count_cards, y)
-                    Card_sprite(it_card, 5 + _ * WIDTH // hand.count_cards, y)
-            y += 540
-            print()
-
-    def dobor(self):
-        first_taker = self.first_round_user
-        if first_taker is not None:
-            first_taker_hand = list(filter(lambda x: x.name == self.first_round_user, self.hands))[0]
-            second_taker_hand = list(filter(lambda x: x.name != first_taker, self.hands))[0]
-            if deck:
-                while len(first_taker_hand) < 6:
-                    first_taker_hand += deck.pop()
-                    if kozir in first_taker_hand:
-                        bito_sprites.empty()
-                        print('Убрал спрайт козыря')
-                while len(second_taker_hand) < 6:
-                    second_taker_hand += deck.pop()
-                    if kozir in second_taker_hand:
-                        bito_sprites.empty()
-                        print('Убрал спрайт козыря')
-
-                print(first_taker_hand)
-                print()
-                print(second_taker_hand)
-            # if deck:
-            #     while len(first_taker_hand) < 6:
-            #         first_taker_hand += deck.pop()
-            #     while len(second_taker_hand) < 6:
-            #         second_taker_hand += deck.pop()
-            #     print(first_taker_hand)
-            #     print()
-            #     print(second_taker_hand)
-
-    def check_win(self):
-        wined_deck = list(filter(lambda x: len(x) == 0, self.hands))
-        if wined_deck:
-            self.win = True
-            print()
-            return True
-        return False
-
-    def begin_round(self, first_hod=False):
-        self.dobor()
-        # global cloth
-
-        # В идеале, чисто, перед тем, как начинать раунд,
-        # должны все по очереди добирать карт до 6, и должны перерисовываться колоды.
-        if all_hod_used_cards:
-            # for _ in all_hod_used_cards:
-            #     used_hand = game.get_involved_hand(_)
-            #     used_hand.pop(used_hand.index(_))
-            card_sprites.empty()
-            self.init_and_draw_decks()
-        if self.check_win():
-            return
-        self.hod_dict = {}
-        if not first_hod:
-            self.hodit = list(filter(lambda x: x != self.hodit, self.hands))[0]
-            print(f"\nХодит: {self.hodit.name}\n")
-        else:
-            self.hodit = max(self.hands)
-            print(f"\nПервым ходит {self.hodit.name}:\n")
-        self.first_round_user = self.hodit.name
-        interface_sprites.update(self.first_round_user)
-
-    def end_round(self):
-        pass
-
-    # Должны убираться карты, раздаваться по порядку недостающие карты. Обновляться бито.
-
-    def take(self, hand: Hand):
-        for _ in all_hod_used_cards:
-            used_hand = game.get_involved_hand(_)
-            if used_hand != hand:
-                used_hand.pop(used_hand.index(_))
-            hand += _
-        for _ in self.hands:
-            _.recount()
-        # hand.recount()
-        print(hand)
-        # Сделать проверку на то, что карты нет в той руке, куда добавляем.
-
-    def attack_card(self, attack_card: Card):
-        if self.hodit.name == 'Player':
-            taken_card_sprite = player_hand[player_hand.container.index(attack_card)].image
-        else:
-            taken_card_sprite = pc_hand[pc_hand.container.index(attack_card)].image
-            taken_card_sprite.show_card()
-        self.hod_dict[attack_card] = None
-        taken_card_sprite.update()
-
-
-    def defend_card(self, defending_card: Card):
-        if self.hodit.name != 'Player':
-            defending_card.image.show_card()
-
-        # self.hodit = 'Pc'
-        # else:
-        #     defending_card.image.show_card()
-        self.hod_dict[list(self.hod_dict.keys())[-1]] = defending_card
-        defending_card.image.update()
-
-
-    def get_involved_hand(self, card):
-        return list(filter(lambda x: card in x, self.hands))[0]
-
-
-def terminate():
-    pygame.quit()
-    sys.exit()
 
 
 class Cloth(pygame.sprite.Sprite):
@@ -605,6 +436,169 @@ class Interface_Sprite(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = self.x, self.y
 
 
+HOD_X = 250
+
+game_name = Interface_Sprite('Дурак by tr', 330, 5)
+pc_hand_name = Interface_Sprite('Колода Pc', 30, 30, font_size=30)
+player_hand_name = Interface_Sprite('Колода Player', 15, 570, font_size=30)
+hod_indicator = Interface_Sprite('', 600, 30, font_size=30)
+kozir_sprite = Bito_sprite(kozir, 720, 300)
+bito_button = Button_sprite('Бито', 720, 250)
+take_button = Button_sprite('Беру', 720, 460)
+
+
+class Game:
+    def __init__(self):
+        self.first_round_user = None
+        self.hodit = None
+        self.hands = []
+        self.cards = deck
+        self.hod_dict = {}
+        self.hod = 0
+        self.win = False
+        self.add_decks(pc_hand, player_hand)
+        self.init_and_draw_decks()
+
+    def get_index_user_name(self, pos=-1):
+        if not self.hod_dict:
+            return None
+
+        last_dict_hod = list(self.hod_dict.keys())[pos]
+        return self.get_involved_hand(last_dict_hod).name
+
+        # Изменил возвращаемое значение функции на именно имя ключа из словаря, как имени пользователя, а не значения.
+
+    def get_last_user_name(self):
+        return self.get_index_user_name()
+
+    def get_first_user_name(self):
+        return self.get_index_user_name(0)
+
+    def add_decks(self, *args):
+        self.hands.extend(args)
+
+    def init_and_draw_decks(self):
+        for _ in self.hands:
+            _.recount()
+        y = 60
+        for hand in self.hands:
+            for _, it_card in enumerate(hand):
+                if hand.name == 'Player':
+                    Card_sprite(it_card, 5 + _ * WIDTH // hand.count_cards, y,
+                                show=True)
+                else:
+                    Card_sprite(it_card, 5 + _ * WIDTH // hand.count_cards, y)
+            y += 540
+            print()
+
+    def dobor(self):
+        first_taker = self.first_round_user
+        if first_taker is not None:
+            first_taker_hand = list(filter(lambda x: x.name == self.first_round_user, self.hands))[0]
+            second_taker_hand = list(filter(lambda x: x.name != first_taker, self.hands))[0]
+            if deck:
+                while len(first_taker_hand) < 6 and deck:
+                    first_taker_hand += deck.pop()
+                    if kozir in first_taker_hand:
+                        bito_sprites.empty()
+                        print('Убрал спрайт козыря')
+                while len(second_taker_hand) < 6 and deck:
+                    second_taker_hand += deck.pop()
+                    if kozir in second_taker_hand:
+                        bito_sprites.empty()
+                        print('Убрал спрайт козыря')
+
+                print(first_taker_hand)
+                print()
+                print(second_taker_hand)
+
+    def check_win(self):
+        wined_deck = list(filter(lambda x: len(x) == 0, self.hands))
+        if wined_deck:
+            self.win = True
+            print()
+            return wined_deck[0]
+        return False
+
+    def begin_round(self, first_hod=False):
+        self.dobor()
+        for _ in self.hands:
+            _.recount()
+        # В идеале, чисто, перед тем, как начинать раунд,
+        # должны все по очереди добирать карт до 6, и должны перерисовываться колоды. - готово.
+        if all_hod_used_cards:
+            card_sprites.empty()
+            self.init_and_draw_decks()
+        winer = self.check_win()
+        if type(winer) is Hand:
+            losed = list(filter(lambda x: x.name != winer.name, self.hands))[0]
+            print(f'{winer.name} победил. {losed.name} остаётся в дураках.')
+            return
+        self.hod_dict = {}
+        if not first_hod:
+            self.hodit = list(filter(lambda x: x != self.hodit, self.hands))[0]
+            print(f"\nХодит: {self.hodit.name}\n")
+        else:
+            self.hodit = max(self.hands)
+            print(f"\nПервым ходит {self.hodit.name}:\n")
+        self.first_round_user = self.hodit.name
+        hod_indicator.text = f'Первым ходит: {self.first_round_user}'
+        hod_indicator.update()
+
+    def end_round(self):
+        pass
+
+    # Должны убираться карты, раздаваться по порядку недостающие карты. Обновляться бито. - готово.
+
+    def take(self, hand: Hand):
+        for _ in all_hod_used_cards:
+            used_hand = game.get_involved_hand(_)
+            if used_hand != hand:
+                used_hand.pop(used_hand.index(_))
+            hand += _
+        print(self.hands)
+        for _ in self.hands:
+            _.recount()
+            # print(hand)
+        # Сделать проверку на то, что карты нет в той руке, куда добавляем. - готово.
+
+    # def bito(self):
+    # for _ in all_hod_used_cards:
+    #     used_hand = game.get_involved_hand(_)
+    #     used_hand.pop(used_hand.index(_))
+    # print(self.hands)
+    # card_sprites.empty()
+    # for _ in self.hands:
+    #     _.recount()
+    # game.begin_round()
+
+    def attack_card(self, attack_card: Card):
+        if self.hodit.name == 'Player':
+            taken_card_sprite = player_hand[player_hand.container.index(attack_card)].image
+        else:
+            taken_card_sprite = pc_hand[pc_hand.container.index(attack_card)].image
+            taken_card_sprite.show_card()
+        self.hod_dict[attack_card] = None
+        taken_card_sprite.update()
+
+    def defend_card(self, defending_card: Card):
+        if self.hodit.name != 'Player':
+            defending_card.image.show_card()
+        self.hod_dict[list(self.hod_dict.keys())[-1]] = defending_card
+        defending_card.image.update()
+
+    def get_involved_hand(self, card):
+        return list(filter(lambda x: card in x, self.hands))[0]
+
+
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
+
+
+
 def formated_hod_return():
     return f'Сейчас ходит: {game.hodit.name}'
 
@@ -613,19 +607,14 @@ if __name__ == '__main__':
     pygame.display.set_caption('The fool')
     cloth = Cloth()
     game = Game()
+    # Не учёл правило, что после первого хода - атаки, можно подкладывать только карты, которые уже были в игре, но могу его реализовать, когда завершу полностью игровой цикл и интерфейс.
 
     all_hod_used_cards = list()
     game.begin_round(first_hod=True)
     running = True
     # start_screen()
     # Пока проект не доделан заставка закомментирована.
-    game_name = Interface_Sprite('Дурак by tr', 330, 5)
-    pc_hand_name = Interface_Sprite('Колода Pc', 30, 30, font_size=30)
-    player_hand_name = Interface_Sprite('Колода Player', 15, 570, font_size=30)
-    hod_indicator = Interface_Sprite('', 600, 30, font_size=30)
-    kozir_sprite = Bito_sprite(kozir, 720, 300)
-    bito_button = Button_sprite('Бито', 720, 250)
-    take_button = Button_sprite('Беру', 720, 460)
+
 
     while running:
         # while not game.win:
@@ -638,6 +627,10 @@ if __name__ == '__main__':
                 fair_play = True
                 all_hod_used_cards = [*list(game.hod_dict.keys()), *list(game.hod_dict.values())]
                 all_hod_used_cards = list(filter(lambda x: x is not None, all_hod_used_cards))
+                # if (all(list(map(lambda x: x in all_hod_used_cards, player_hand)))) and (all(list(map(lambda x: x in all_hod_used_cards, pc_hand)))):
+                #     game.bito()
+                #     game.begin_round()
+                #     continue
                 if game.hodit.name == 'Player':
                     founded = False
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -716,18 +709,29 @@ if __name__ == '__main__':
                                 button_text = _.text
                                 if button_text == 'Бито':
                                     if game.first_round_user == 'Player':
-                                        player_hand.container = list(
-                                            filter(lambda x: x not in all_hod_used_cards, player_hand.container))
-                                        game.begin_round()
-                                        continue
+                                        if all_hod_used_cards:
+                                            player_hand.container = list(
+                                                filter(lambda x: x not in all_hod_used_cards, player_hand.container))
+                                            # game.bito()
+                                            game.begin_round()
+                                            continue
+                                        else:
+                                            print(
+                                                'Вы не можете сейчас говорить бито, потому что не положили ни одной карты.')
+                                            fair_play = False
+
                                     else:
                                         print('Вы не можете сейчас говорить бито, потому что не вы атаковали первым.')
                                         fair_play = False
                                 elif button_text == 'Беру':
-                                    game.take(player_hand)
-                                    print(f'Игрок берёт.\n')
-                                    game.begin_round()
-                                    continue
+                                    if game.first_round_user == 'Pc':
+                                        game.take(player_hand)
+                                        print(f'Игрок берёт.\n')
+                                        game.begin_round()
+                                        continue
+                                    else:
+                                        print('Вы не можете брать сейчас, потому что вы ходите.')
+                                        fair_play = False
                                 # if shot_card == kozir:
                                 #     pass
                         if founded:
@@ -739,9 +743,22 @@ if __name__ == '__main__':
                                 print()
                 else:
                     if game.first_round_user == 'Pc' or game.first_round_user is None:
-                        card_to_attack = min(list(filter(lambda x: x not in all_hod_used_cards, pc_hand)))
-                        game.attack_card(card_to_attack)
-                        print(f'Компьютер атакует картой {card_to_attack}.\n')
+                        if pc_hand:
+                            card_to_attacks = list(filter(lambda x: x not in all_hod_used_cards, pc_hand))
+                            # print(pc_hand)
+                            if card_to_attacks:
+                                card_to_attack = min(card_to_attacks)
+                                if card_to_attack.kozir:
+                                    game.attack_card(card_to_attack)
+                                    print(f'Компьютер атакует картой {card_to_attack}.\n')
+                                else:
+                                    # game.bito()
+                                    game.begin_round()
+                            else:
+                                print(pc_hand)
+                                game.begin_round()
+                        else:
+                            game.check_win()
                     elif game.first_round_user == 'Player':
                         player_played_card = list(game.hod_dict.keys())[-1]
                         possible_cards_to_defend = list(
@@ -764,6 +781,8 @@ if __name__ == '__main__':
                     # hod_indicator.text = f'Ходит {game.hodit.name}:'
                     # hod_indicator.redraw_text()
                     print()
+
+        # Баг - после бито ход не переходит на другого игрока.
         screen.fill(pygame.Color('black'))
         # card_sprites.empty()
         # all_sprites.draw(screen)
