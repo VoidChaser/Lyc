@@ -120,8 +120,8 @@ class Card:
         self.suit = suit
         self.str_num = num
         self.num = self.get_num()
-        if self.num != 0:
-            self.image = load_image(f'{self.str_num} {self.suit}.png')
+        # if self.num != 0:
+        #     self.image = load_image(f'{self.str_num} {self.suit}.png')
 
         self.kozir = False  # Чтобы инициализировать когда козырь определен конкретную масть - тру
 
@@ -374,7 +374,7 @@ class Button_sprite(pygame.sprite.Sprite):
             self.text = new_text
             self.image = self.font.render(self.text, False, (pygame.Color(255, 255, 255)))
             self.rect = self.image.get_rect()
-            self.rect.x, self.rect.y = self.x, self.y
+            self.rect.x, self.rect.y = self.x - self.rect.width // 2, self.y - self.rect.height // 2
 
 
 class Interface_Sprite(pygame.sprite.Sprite):
@@ -414,15 +414,24 @@ class Game:
         self.hodit = None
         self.pc_hand = None
         self.player_hand = None
+        self.all_hod_used_cards = []
         self.hands = []
+        self.deck = []
         self.kozir = None
         self.hod_dict = {}
         self.hod = 0
         self.win = False
 
     def new_game(self):
+        global kozir_sprite
+        if self.hands:
+            self.hands = []
         self.flop_deck_to_hands()
-        self.init_and_draw_decks()
+        # self.init_and_draw_decks()
+        self.begin_round(first_hod=True)
+        kozir_sprite = Bito_sprite(game.kozir, 720, 300)
+
+        self.win = False
 
     def flop_deck_to_hands(self):
         self.deck = []
@@ -444,27 +453,36 @@ class Game:
             if _.suit == self.kozir.suit:
                 _.kozir = True
 
+        self.deck.pop(self.deck.index(self.kozir))
+        self.deck.insert(0, self.kozir)
+
         pc_hand = Hand('Pc')
         player_hand = Hand('Player')
         # first_player_is_first = False
-        for _ in range(6):
-            pc_hand += self.deck.pop()
-            player_hand += self.deck.pop()
-        print(self.deck)
-        self.deck.pop(self.deck.index(self.kozir))
-        self.deck.insert(0, self.kozir)
 
         print(f"Выбранный козырь: {self.kozir}")
         print()
 
-        print(pc_hand)
-        print()
+        # print(pc_hand)
+        # print()
 
-        print(player_hand)
-        print()
+        # print(player_hand)
+        # print()
         self.add_decks(pc_hand, player_hand)
         self.pc_hand = pc_hand
         self.player_hand = player_hand
+        for _ in range(6):
+            self.pc_hand += self.deck.pop()
+            self.player_hand += self.deck.pop()
+        for _ in self.hands:
+            _.recount()
+        print(f'Раздал карты первый раз.')
+
+        # self.dobor()
+        # for _ in self.hands:
+        #     _.recount()
+        # print(pc_hand)
+        # print(player_hand)
 
     def get_index_user_name(self, pos=-1):
         if not self.hod_dict:
@@ -514,10 +532,20 @@ class Game:
                     if self.kozir in second_taker_hand:
                         bito_sprites.empty()
                         print('Убрал спрайт козыря')
+        # else:
 
-                print(first_taker_hand)
-                print()
-                print(second_taker_hand)
+        # else:
+        #     for _ in range(6):
+        #         self.pc_hand += self.deck.pop()
+        #         self.player_hand += self.deck.pop()
+        #     print(f'Раздал карты первый раз.')
+        # for _ in self.hands:
+        #     _.recount()
+
+        print(self.deck)
+        print(self.pc_hand)
+        print()
+        print(self.player_hand)
 
     def check_win(self):
         wined_deck = list(filter(lambda x: len(x) == 0, self.hands))
@@ -528,18 +556,19 @@ class Game:
             make_new_game_button.update('Начать новую игру')
             return wined_deck[0]
 
-        return False
+        # return False
 
     def begin_round(self, first_hod=False):
+        self.all_hod_used_cards = []
         self.dobor()
         # fair_play = False
         for _ in self.hands:
             _.recount()
         # В идеале, чисто, перед тем, как начинать раунд,
         # должны все по очереди добирать карт до 6, и должны перерисовываться колоды. - готово.
-        if all_hod_used_cards:
-            card_sprites.empty()
-            self.init_and_draw_decks()
+        # if self.all_hod_used_cards:
+        card_sprites.empty()
+        self.init_and_draw_decks()
         winer = self.check_win()
         if type(winer) is Hand:
             losed = list(filter(lambda x: x.name != winer.name, self.hands))[0]
@@ -563,7 +592,7 @@ class Game:
     # Должны убираться карты, раздаваться по порядку недостающие карты. Обновляться бито. - готово.
 
     def take(self, hand: Hand):
-        for _ in all_hod_used_cards:
+        for _ in self.all_hod_used_cards:
             used_hand = game.get_involved_hand(_)
             if used_hand != hand:
                 used_hand.pop(used_hand.index(_))
@@ -575,10 +604,10 @@ class Game:
         # Сделать проверку на то, что карты нет в той руке, куда добавляем. - готово.
 
     def bito(self):
-        if all_hod_used_cards:
+        if self.all_hod_used_cards:
             for _ in game.hands:
                 _.container = list(
-                    filter(lambda x: x not in all_hod_used_cards, _.container))
+                    filter(lambda x: x not in self.all_hod_used_cards, _.container))
                 _.recount()
 
     # def bito(self):
@@ -629,7 +658,7 @@ if __name__ == '__main__':
     hod_indicator = Interface_Sprite('', 600, 30, font_size=30)
     bito_button = Button_sprite('Бито', 720, 250)
     take_button = Button_sprite('Беру', 720, 460)
-    make_new_game_button = Button_sprite('', 500, 500)
+    make_new_game_button = Button_sprite('', 500, 400)
 
     pygame.display.set_caption('The fool')
     cloth = Cloth()
@@ -639,13 +668,13 @@ if __name__ == '__main__':
 
     # Не учёл правило, что после первого хода - атаки, можно подкладывать только карты, которые уже были в игре, но могу его реализовать, когда завершу полностью игровой цикл и интерфейс.
 
-    all_hod_used_cards = list()
+    # all_hod_used_cards = list()
+    # game.begin_round(first_hod=True)
     game.begin_round(first_hod=True)
     running = True
 
     # start_screen()
     # Пока проект не доделан заставка закомментирована.
-
 
     while running:
         # while not game.win:
@@ -656,8 +685,8 @@ if __name__ == '__main__':
             # в иных случаях надо смотреть на первую карту.
             if not game.win:
                 fair_play = True
-                all_hod_used_cards = [*list(game.hod_dict.keys()), *list(game.hod_dict.values())]
-                all_hod_used_cards = list(filter(lambda x: x is not None, all_hod_used_cards))
+                game.all_hod_used_cards = [*list(game.hod_dict.keys()), *list(game.hod_dict.values())]
+                game.all_hod_used_cards = list(filter(lambda x: x is not None, game.all_hod_used_cards))
                 # if (all(list(map(lambda x: x in all_hod_used_cards, player_hand)))) and (all(list(map(lambda x: x in all_hod_used_cards, pc_hand)))):
                 #     game.bito()
                 #     game.begin_round()
@@ -672,40 +701,61 @@ if __name__ == '__main__':
                         #     button_y = _.rect.y
                         pushed_cards = list(filter(lambda x: (x.rect.x <= curr_x <= x.rect.x + x.rect.width) and (
                                 x.rect.y <= curr_y <= x.rect.y + x.rect.height), card_sprites))
-                        # print(f'Были нажаты карты:')
-                        # print(pushed_cards)
+                        pushed_buttons = list(filter(lambda x: (x.rect.x <= curr_x <= x.rect.x + x.rect.width) and (
+                                x.rect.y <= curr_y <= x.rect.y + x.rect.height), button_sprites))
+                        # for _ in button_sprites:
+                        #     button_x = _.rect.x
+                        #     button_y = _.rect.y
+                        #     if (button_x <= curr_x <= button_x + _.rect.width) and (
+                        #             button_y <= curr_y <= button_y + _.rect.height):
+                        if pushed_cards or pushed_buttons:
+                            founded = True
+
+                        if pushed_buttons:
+                            shot_button = pushed_buttons[0]
+                            button_text = shot_button.text
+                            if button_text == 'Бито':
+                                if game.first_round_user == 'Player':
+                                    if game.all_hod_used_cards:
+                                        print('Игрок говорит бито.')
+                                        game.bito()
+                                        game.begin_round()
+                                        # continue
+                                    else:
+                                        print(
+                                            'Вы не можете сейчас говорить бито, потому что не положили ни одной карты.')
+                                        fair_play = False
+                                else:
+                                    print('Вы не можете сейчас говорить бито, потому что не вы атаковали первым.')
+                                    fair_play = False
+
+                            elif button_text == 'Беру':
+                                if game.first_round_user == 'Pc':
+                                    print(f'Игрок берёт.\n')
+                                    game.take(game.player_hand)
+                                    game.begin_round()
+                                    # continue
+                                else:
+                                    print('Вы не можете брать сейчас, потому что вы ходите.')
+                                    fair_play = False
                         if pushed_cards:
                             shot_card = max(pushed_cards, key=lambda x: x.rect.x).card
-                            # if (button_x <= curr_x <= button_x + _.rect.width) and (
-                            #         button_y <= curr_y <= button_y + _.rect.height):
-                            founded = True
-                            # shot_card = _.card
                             if shot_card == game.kozir:
                                 pass
                             else:
                                 shot_deck_name = game.get_involved_hand(shot_card).name
-                                # shot_deck_name = list(filter(lambda x: _.card in x.container, game.hands))[0].name
-                                # Несостыковка. Похоже что использование pop для выкидывания
-                                # использованной уже карты из учёта карт для выбора - плохая идея,
-                                # и стоит учитывать то, что использованные карты выбирать не нужно,-
-                                # путём их убирания из possible_cards_to_..., а после уж и методом pop.
-                                # print(
-                                #     f'Выбрана карта {shot_card} колоды'
-                                #     f' {shot_deck_name}')
                                 if shot_deck_name == 'Player':
                                     if game.first_round_user == 'Player' or game.first_round_user is None:
-                                        # if shot_card
-                                        if shot_card not in all_hod_used_cards:
+                                        if shot_card not in game.all_hod_used_cards:
                                             game.attack_card(shot_card)
                                             print(f'Игрок атакует картой {shot_card}.\n')
                                         else:
                                             print(f'Картой {shot_card} уже ходили.')
                                             fair_play = False
                                         # Если первым ходил, игрок, то в раунде игрок будет только атаковать.
-                                        # Поэтому убрал условие.
                                     elif game.first_round_user == 'Pc':
                                         pc_played_card = list(game.hod_dict.keys())[-1]
-                                        if shot_card not in all_hod_used_cards:
+                                        if shot_card not in game.all_hod_used_cards:
                                             if shot_card > pc_played_card:
                                                 game.defend_card(shot_card)
                                                 print(f'Игрок защищается от {pc_played_card} картой {shot_card}.\n')
@@ -716,90 +766,37 @@ if __name__ == '__main__':
                                         else:
                                             print(f'Картой {shot_card} уже ходили.')
                                             fair_play = False
-                                        # if shot_card > pc_played_card:
-                                        #     if shot_card not in all_hod_used_cards:
-                                        #         game.defend_card(shot_card)
-                                        #         print(f'Игрок защищается от {pc_played_card} картой {shot_card}.\n')
-                                        #     else:
-                                        #         print(f'Картой {shot_card} уже ходили.')
-                                        #         fair_play = False
-                                        # else:
-                                        #     print(f'Этой картой нельзя защититься.'
-                                        #           f' Она меньше по значению либо не подходит по масти.')
-                                        #     fair_play = False
                                 else:
                                     print('Вы не выбрали вашу карту')
                                     fair_play = False
-
-                        for _ in button_sprites:
-                            button_x = _.rect.x
-                            button_y = _.rect.y
-                            if (button_x <= curr_x <= button_x + _.rect.width) and (
-                                    button_y <= curr_y <= button_y + _.rect.height):
-                                print(_.text)
-                                founded = True
-                                button_text = _.text
-                                if button_text == 'Бито':
-                                    if game.first_round_user == 'Player':
-                                        if all_hod_used_cards:
-                                            # game.bito()
-                                            # player_hand.recount()
-                                            # pc_hand.recount()
-                                            game.bito()
-                                            game.begin_round()
-                                            # continue
-                                        else:
-                                            print(
-                                                'Вы не можете сейчас говорить бито, потому что не положили ни одной карты.')
-                                            fair_play = False
-
-                                    else:
-                                        print('Вы не можете сейчас говорить бито, потому что не вы атаковали первым.')
-                                        fair_play = False
-                                elif button_text == 'Беру':
-                                    if game.first_round_user == 'Pc':
-                                        game.take(game.player_hand)
-                                        print(f'Игрок берёт.\n')
-                                        game.begin_round()
-                                        # continue
-                                    else:
-                                        print('Вы не можете брать сейчас, потому что вы ходите.')
-                                        fair_play = False
-                                # if shot_card == kozir:
-                                #     pass
-                        if founded:
+                        if founded and not game.win:
                             if fair_play:
                                 print('Игрок сходил\n')
-                                # hodit = False
+                                print(f'Состояние раунда на данный момент:\n {game.hod_dict}')
                                 game.hodit = list(filter(lambda x: x.name != 'Player', game.hands))[0]
-                                # print(type(game.hodit))
                                 print()
                 else:
                     if game.first_round_user == 'Pc' or game.first_round_user is None:
                         if game.pc_hand:
-                            card_to_attacks = list(filter(lambda x: x not in all_hod_used_cards, game.pc_hand))
+                            card_to_attacks = list(filter(lambda x: x not in game.all_hod_used_cards, game.pc_hand))
                             # print(pc_hand)
                             if card_to_attacks:
                                 card_to_attack = min(card_to_attacks)
-                                if not card_to_attack.kozir:
-                                    game.attack_card(card_to_attack)
-                                    print(f'Компьютер атакует картой {card_to_attack}.\n')
-                                else:
-                                    game.bito()
-                                    game.begin_round()
-                                    # continue
+                                game.attack_card(card_to_attack)
+                                print(f'Компьютер атакует картой {card_to_attack}.\n')
+                                # continue
                             else:
-                                print(game.pc_hand)
                                 game.bito()
                                 game.begin_round()
                                 # continue
                         else:
                             game.check_win()
+
                     elif game.first_round_user == 'Player':
-                        print(game.hod_dict)
+                        # print(game.hod_dict)
                         player_played_card = list(game.hod_dict.keys())[-1]
                         possible_cards_to_defend = list(
-                            filter(lambda x: x > player_played_card and x not in all_hod_used_cards, game.pc_hand))
+                            filter(lambda x: x > player_played_card and x not in game.all_hod_used_cards, game.pc_hand))
                         if possible_cards_to_defend:
                             card_to_defend = min(possible_cards_to_defend)
                             game.defend_card(card_to_defend)
@@ -809,7 +806,7 @@ if __name__ == '__main__':
                             print(f'Компьютер берёт.\n')
                             game.begin_round()
                             # continue
-                            # Берёт.
+
                     print('Компьютер сходил\n')
                     print(f'Состояние раунда на данный момент:\n {game.hod_dict}')
                     game.hodit = list(filter(lambda x: x.name != 'Pc', game.hands))[0]
@@ -818,6 +815,21 @@ if __name__ == '__main__':
                     # hod_indicator.text = f'Ходит {game.hodit.name}:'
                     # hod_indicator.redraw_text()
                     print()
+            if game.win:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    curr_x, curr_y = event.pos
+                    # for event in pygame.event.get():
+                    # print('Я сюда пришёл всё же')
+                    pushed_buttons = list(filter(lambda x: (x.rect.x <= curr_x <= x.rect.x + x.rect.width) and (
+                            x.rect.y <= curr_y <= x.rect.y + x.rect.height), button_sprites))
+                    if pushed_buttons:
+                        # print('Какая то кнопка была нажата')
+                        pushed_button = pushed_buttons[0]
+                        # print(pushed_button)
+                        if pushed_button.text == 'Начать новую игру':
+                            game.new_game()
+                            make_new_game_button.update('')
+
         # Баг - когда убирается козырь когда игрок берёт - следующий ход не продолжается за Pc, а переходит на игрока, хотя дожен дальше идти на Pc.
 
         # Баг - после бито ход не переходит на другого игрока.
