@@ -474,7 +474,8 @@ class Game:
         self.begin_round(first_hod=True)
         kozir_sprite = Bito_sprite(game.kozir, 820, 290)
         bito_sprite = Bito_sprite(bito_card_image, 850, 335)
-        interface_sprites.empty()
+        # interface_sprites.empty()
+        kozir_while_empty_value = Interface_Sprite(f'', 820, 355)
         kozir_while_empty_suit = Interface_Sprite(f'Козыри:', 820, 335)
         kozir_while_empty_value = Interface_Sprite(f'{self.kozir.suit}', 820, 355)
 
