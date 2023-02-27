@@ -48,7 +48,8 @@ def start_screen():
                   "**В качестве козыря при раздаче не ставятся тузы.**",
                   "P.s. Карты козырной масти ценятся в игре, так как любая карта козырной масти может",
                   "покрыть любую карту кроме козырных карт достоинством выше.",
-                  "",
+                  "!!!Иногда слетает текст, особенность прорисовки в пайгейм. Если видите,",
+                  "что текст поехал при запуске, перезапустите игру.!!!!!",
                   "Определение первого хода:",
                   "Первый ход определяется наличием козырей у игроков,",
                   " и/или их достоинством: у кого есть карта козырной масти",
@@ -62,6 +63,8 @@ def start_screen():
                   "Атака происходит любой картой из своей колоды",
                   "В ответ защищающийся игрок должен отбить карту противника картой козырной масти,",
                   "либо высшего достоинства",
+                  "Но атаковать после первого раза, когда отбили карту,"
+                  "можно только картами такого же достоинства",
                   "В противном случае, защищающийся обязан взять все оставшиеся карты со стола,",
                   " или взять сразу первую карту, если не может её отбить.",
                   "Защита происходит до того момента, как на столе окажутся 6 заверщенных пар карт,",
@@ -462,6 +465,8 @@ class Game:
     def new_game(self):
         global kozir_sprite
         global bito_sprite
+        global kozir_while_empty_suit
+        global kozir_while_empty_value
         game.winner = None
         if self.hands:
             self.hands = []
@@ -469,6 +474,10 @@ class Game:
         self.begin_round(first_hod=True)
         kozir_sprite = Bito_sprite(game.kozir, 820, 290)
         bito_sprite = Bito_sprite(bito_card_image, 850, 335)
+        interface_sprites.empty()
+        kozir_while_empty_suit = Interface_Sprite(f'Козыри:', 820, 335)
+        kozir_while_empty_value = Interface_Sprite(f'{self.kozir.suit}', 820, 355)
+
         self.win = False
 
     # Метод начинает новую игру
@@ -507,7 +516,7 @@ class Game:
             self.player_hand += self.deck.pop()
         for _ in self.hands:
             _.recount()
-        print(f'Раздал карты первый раз.')
+        # print(f'Раздал карты первый раз.')
 
     # Метод раздаёт карты когда начинается игра и инициализирует козырь, руки игроков
 
@@ -600,11 +609,11 @@ class Game:
             _.recount()
         card_sprites.empty()
         self.init_and_draw_decks()
-        winer = self.check_win()
-        if type(winer) is Hand:
-            losed = list(filter(lambda x: x.name != winer.name, self.hands))[0]
-            # print(f'{winer.name} победил. {losed.name} остаётся в дураках.')
-            return
+        # winer = self.check_win()
+        # if type(winer) is Hand:
+        #     losed = list(filter(lambda x: x.name != winer.name, self.hands))[0]
+        #     print(f'{winer.name} победил. {losed.name} остаётся в дураках.')
+        # return
         self.hod_dict = {}
         if not first_hod:
             self.hodit = list(filter(lambda x: x != self.hodit, self.hands))[0]
@@ -697,8 +706,6 @@ if __name__ == '__main__':
     log_sprite = Interface_Sprite('', 15, 750)
     kozir_sprite = Bito_sprite(game.kozir, 820, 290)
     bito_sprite = Bito_sprite(bito_card_image, 850, 335)
-    kozir_while_empty_suit = Interface_Sprite(f'Козыри:', 820, 335)
-    kozir_while_empty_value = Interface_Sprite(f'{game.kozir.suit}', 820, 355)
 
     # Создаём классы, которые используют данные, полученные в ходе игры.
 
