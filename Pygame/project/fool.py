@@ -411,6 +411,7 @@ class Game:
     def __init__(self):
         self.previlege_hod_user = None
         self.first_round_user = None
+        # self.allowed_cards = []
         self.hodit = None
         self.pc_hand = None
         self.player_hand = None
@@ -514,7 +515,7 @@ class Game:
                 else:
                     Card_sprite(it_card, 5 + _ * WIDTH // hand.count_cards, y)
             y += 540
-            print()
+        print()
 
     def dobor(self):
         first_taker = self.first_round_user
@@ -532,20 +533,14 @@ class Game:
                     if self.kozir in second_taker_hand:
                         bito_sprites.empty()
                         print('Убрал спрайт козыря')
-        # else:
+                    # Тут нужно учесть то, что в бито спрайтс еще будут карты, которые до козыря были.
+                    # И их тоже надо реализовать, как убираются. То есть, когда остаётся только один козырь при "брать",
+                    # убирать спрайт повёрнутой карты.
 
-        # else:
-        #     for _ in range(6):
-        #         self.pc_hand += self.deck.pop()
-        #         self.player_hand += self.deck.pop()
-        #     print(f'Раздал карты первый раз.')
-        # for _ in self.hands:
-        #     _.recount()
-
-        print(self.deck)
-        print(self.pc_hand)
-        print()
-        print(self.player_hand)
+        # print(self.deck)
+        # print(self.pc_hand)
+        # print()
+        # print(self.player_hand)
 
     def check_win(self):
         wined_deck = list(filter(lambda x: len(x) == 0, self.hands))
@@ -597,7 +592,7 @@ class Game:
             if used_hand != hand:
                 used_hand.pop(used_hand.index(_))
             hand += _
-        print(self.hands)
+        # print(self.hands)
         for _ in self.hands:
             _.recount()
             # print(hand)
@@ -747,8 +742,18 @@ if __name__ == '__main__':
                                 if shot_deck_name == 'Player':
                                     if game.first_round_user == 'Player' or game.first_round_user is None:
                                         if shot_card not in game.all_hod_used_cards:
-                                            game.attack_card(shot_card)
-                                            print(f'Игрок атакует картой {shot_card}.\n')
+                                            if not game.all_hod_used_cards:
+                                                game.attack_card(shot_card)
+                                            else:
+                                                if shot_card.num in list(map(lambda x: x.num, game.all_hod_used_cards)):
+                                                    game.attack_card(shot_card)
+                                                else:
+                                                    print(
+                                                        f'Картой {shot_card} нельзя атаковать, так как она не сходна по достоинству с уже выложенными картами.')
+                                                    fair_play = False
+                                            if fair_play:
+                                                print(f'Игрок атакует картой {shot_card}.\n')
+
                                         else:
                                             print(f'Картой {shot_card} уже ходили.')
                                             fair_play = False
@@ -778,14 +783,28 @@ if __name__ == '__main__':
                 else:
                     if game.first_round_user == 'Pc' or game.first_round_user is None:
                         if game.pc_hand:
-                            card_to_attacks = list(filter(lambda x: x not in game.all_hod_used_cards, game.pc_hand))
+                            if not game.all_hod_used_cards:
+                                cards_to_attacks = list(
+                                    filter(lambda x: x not in game.all_hod_used_cards, game.pc_hand))
+                            else:
+                                cards_to_attacks = list(filter(lambda x: (x not in game.all_hod_used_cards) and (
+                                            x.num in list(map(lambda y: y.num, game.all_hod_used_cards))),
+                                                               game.pc_hand))
                             # print(pc_hand)
-                            if card_to_attacks:
-                                card_to_attack = min(card_to_attacks)
+                            if cards_to_attacks:
+                                not_kozired_cards_to_attack = list(
+                                    filter(lambda x: x.suit != game.kozir.suit and x.num <= 11, cards_to_attacks))
+                                print(not_kozired_cards_to_attack)
+                                if not_kozired_cards_to_attack:
+                                    card_to_attack = not_kozired_cards_to_attack[
+                                        random.randint(0, len(not_kozired_cards_to_attack) - 1)]
+                                else:
+                                    card_to_attack = min(cards_to_attacks)
                                 game.attack_card(card_to_attack)
                                 print(f'Компьютер атакует картой {card_to_attack}.\n')
                                 # continue
                             else:
+                                print(f'Компьютер говорит бито.')
                                 game.bito()
                                 game.begin_round()
                                 # continue
