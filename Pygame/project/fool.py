@@ -441,6 +441,20 @@ class Game:
         self.hod_dict = {}
         self.hod = 0
         self.win = False
+        self.game_name = Interface_Sprite('Дурак by tr', 330, 5)
+        self.pc_hand_name = Interface_Sprite('Колода Pc', 30, 30, font_size=30)
+        self.player_hand_name = Interface_Sprite('Колода Player', 15, 570, font_size=30)
+        self.bito_button = Button_sprite('Бито', 850, 250)
+        self.take_button = Button_sprite('Беру', 850, 460)
+        self.make_new_game_button = Button_sprite('', 500, 400)
+        self.deck_cards_count = Interface_Sprite('', 935, 315)
+        self.log_sprite = Interface_Sprite('', 15, 750)
+        self.kozir_sprite = None
+        self.bito_sprite = None
+        # self.kozir_while_empty_value = None
+        self.kozir_while_empty_suit = Interface_Sprite(f'Козыри:', 820, 335)
+        self.kozir_while_empty_value = Interface_Sprite(f'', 820, 355)
+        self.cloth = Cloth()
 
         # Инициализируем атрибуты класса
 
@@ -463,21 +477,18 @@ class Game:
     # Метод рисует карты при их выкладе.
 
     def new_game(self):
-        global kozir_sprite
-        global bito_sprite
-        global kozir_while_empty_suit
-        global kozir_while_empty_value
-        game.winner = None
+        self.winner = None
         if self.hands:
             self.hands = []
         self.flop_deck_to_hands()
         self.begin_round(first_hod=True)
-        kozir_sprite = Bito_sprite(game.kozir, 820, 290)
-        bito_sprite = Bito_sprite(bito_card_image, 850, 335)
-        # interface_sprites.empty()
-        kozir_while_empty_value = Interface_Sprite(f'', 820, 355)
-        kozir_while_empty_suit = Interface_Sprite(f'Козыри:', 820, 335)
-        kozir_while_empty_value = Interface_Sprite(f'{self.kozir.suit}', 820, 355)
+        self.deck_cards_count.update(str(len(game.deck)))
+        self.log_sprite.update('')
+        self.kozir_sprite = Bito_sprite(game.kozir, 820, 290)
+        self.bito_sprite = Bito_sprite(bito_card_image, 850, 335)
+        # self.kozir_while_empty_value = Interface_Sprite(f'', 820, 355)
+        self.kozir_while_empty_suit.update(f'Козыри:')
+        self.kozir_while_empty_value.update(f'{self.kozir.suit}', )
 
         self.win = False
 
@@ -556,8 +567,6 @@ class Game:
     # Метод рисует карты в руках
 
     def dobor(self):
-        global kozir_sprite
-        global bito_sprite
         first_taker = self.first_round_user
         if first_taker is not None:
             first_taker_hand = list(filter(lambda x: x.name == self.first_round_user, self.hands))[0]
@@ -567,22 +576,22 @@ class Game:
                     first_taker_hand += self.deck.pop()
                     if len(game.deck) == 1:
                         bito_sprites.empty()
-                        kozir_sprite = Bito_sprite(game.kozir, 820, 290)
+                        self.kozir_sprite = Bito_sprite(game.kozir, 820, 290)
                     # print('Убрал спрайт карты бито')
                     if self.kozir in first_taker_hand:
-                        kozir_sprite.update(new_img=blank_image)
+                        self.kozir_sprite.update(new_img=blank_image)
                         # print('Убрал спрайт козыря')
                 while len(second_taker_hand) < 6 and self.deck:
                     second_taker_hand += self.deck.pop()
                     if len(game.deck) == 1:
                         bito_sprites.empty()
-                        kozir_sprite = Bito_sprite(game.kozir, 820, 290)
+                        self.kozir_sprite = Bito_sprite(game.kozir, 820, 290)
                         # print('Убрал спрайт карты бито')
 
                     if self.kozir in second_taker_hand:
-                        kozir_sprite.update(new_img=blank_image)
+                        self.kozir_sprite.update(new_img=blank_image)
                         # print('Убрал спрайт козыря')
-                deck_cards_count.update(str(len(self.deck)) if len(self.deck) else '')
+                self.deck_cards_count.update(str(len(self.deck)) if len(self.deck) else '')
 
                 # Тут нужно учесть то, что в бито спрайтс еще будут карты, которые до козыря были.
                 # И их тоже надо реализовать, как убираются. То есть, когда остаётся только один козырь при "брать",
@@ -591,15 +600,15 @@ class Game:
                 # нет ли победителя, и в зависимости от количества карт убирает спрайты колоды.
 
     def check_win(self):
-        global log_sprite
-        wined_deck = list(filter(lambda x: len(x) == 0, self.hands))
-        if wined_deck:
-            self.win = True
-            make_new_game_button.update('Начать новую игру')
-            self.winner = wined_deck[0].name
-            losed = list(filter(lambda x: x.name != self.winner, self.hands))[0]
-            log_sprite.update(f'{self.winner} победил. {losed.name} остаётся в дураках.')
-            return wined_deck[0]
+        if not self.deck:
+            wined_deck = list(filter(lambda x: len(x) == 0, self.hands))
+            if wined_deck:
+                self.win = True
+                self.make_new_game_button.update('Начать новую игру')
+                self.winner = wined_deck[0].name
+                self.losed = list(filter(lambda x: x.name != self.winner, self.hands))[0]
+                self.log_sprite.update(f'{self.winner} победил. {self.losed.name} остаётся в дураках.')
+                return wined_deck[0]
 
     # Метод проверяет победу и возвращает имя если есть победитель.
 
@@ -610,10 +619,13 @@ class Game:
             _.recount()
         card_sprites.empty()
         self.init_and_draw_decks()
-        # winer = self.check_win()
+        self.winner = self.check_win()
+        if self.winner:
+            return
         # if type(winer) is Hand:
         #     losed = list(filter(lambda x: x.name != winer.name, self.hands))[0]
         #     print(f'{winer.name} победил. {losed.name} остаётся в дураках.')
+        #     return
         # return
         self.hod_dict = {}
         if not first_hod:
@@ -635,7 +647,10 @@ class Game:
             hand += _
         for _ in self.hands:
             _.recount()
-            # print(hand)
+        # self.hod_dict = {}
+        # self.all_hod_used_cards = []
+
+        # print(hand)
         # Сделать проверку на то, что карты нет в той руке, куда добавляем. - готово.
 
     # Метод беру.
@@ -646,6 +661,8 @@ class Game:
                 _.container = list(
                     filter(lambda x: x not in self.all_hod_used_cards, _.container))
                 _.recount()
+        # self.hod_dict = {}
+        self.all_hod_used_cards = []
 
     # Метод бито.
 
@@ -688,13 +705,13 @@ if __name__ == '__main__':
     # Пускаем заставку и после растягиваем экран.
     screen = pygame.display.set_mode((1000, 800))
 
-    game_name = Interface_Sprite('Дурак by tr', 330, 5)
-    pc_hand_name = Interface_Sprite('Колода Pc', 30, 30, font_size=30)
-    player_hand_name = Interface_Sprite('Колода Player', 15, 570, font_size=30)
-    bito_button = Button_sprite('Бито', 850, 250)
-    take_button = Button_sprite('Беру', 850, 460)
-    make_new_game_button = Button_sprite('', 500, 400)
-    cloth = Cloth()
+    # game_name = Interface_Sprite('Дурак by tr', 330, 5)
+    # pc_hand_name = Interface_Sprite('Колода Pc', 30, 30, font_size=30)
+    # player_hand_name = Interface_Sprite('Колода Player', 15, 570, font_size=30)
+    # bito_button = Button_sprite('Бито', 850, 250)
+    # take_button = Button_sprite('Беру', 850, 460)
+    # make_new_game_button = Button_sprite('', 500, 400)
+    # cloth = Cloth()
 
     # Инициализируем спрайты, которые не используют данные, полученные в ходе игры.
 
@@ -703,10 +720,10 @@ if __name__ == '__main__':
 
     # Инициализуем игру и начинаем новую игру.
 
-    deck_cards_count = Interface_Sprite(str(len(game.deck)), 935, 315)
-    log_sprite = Interface_Sprite('', 15, 750)
-    kozir_sprite = Bito_sprite(game.kozir, 820, 290)
-    bito_sprite = Bito_sprite(bito_card_image, 850, 335)
+    # deck_cards_count = Interface_Sprite(str(len(game.deck)), 935, 315)
+    # log_sprite = Interface_Sprite('', 15, 750)
+    # kozir_sprite = Bito_sprite(game.kozir, 820, 290)
+    # bito_sprite = Bito_sprite(bito_card_image, 850, 335)
 
     # Создаём классы, которые используют данные, полученные в ходе игры.
 
@@ -748,72 +765,80 @@ if __name__ == '__main__':
                             if button_text == 'Бито':
                                 if game.first_round_user == 'Player':
                                     if game.all_hod_used_cards:
-                                        log_sprite.update('Игрок говорит бито.')
+                                        game.log_sprite.update('Игрок говорит бито.')
                                         game.bito()
                                         game.begin_round()
                                     else:
-                                        log_sprite.update(
+                                        game.log_sprite.update(
                                             'Вы не можете сейчас говорить бито, потому что не положили ни одной карты.')
                                         fair_play = False
                                 else:
-                                    log_sprite.update(
+                                    game.log_sprite.update(
                                         'Вы не можете сейчас говорить бито, потому что не вы атаковали первым.')
                                     fair_play = False
+                                game.check_win()
 
                             elif button_text == 'Беру':
                                 if game.first_round_user == 'Pc':
-                                    log_sprite.update(f'Игрок берёт.')
+                                    game.log_sprite.update(f'Игрок берёт.')
                                     game.take(game.player_hand)
                                     game.begin_round()
                                 else:
-                                    log_sprite.update('Вы не можете брать сейчас, потому что вы ходите.')
+                                    game.log_sprite.update('Вы не можете брать сейчас, потому что вы ходите.')
                                     fair_play = False
+                                game.check_win()
+
                         if pushed_cards:
                             shot_card = max(pushed_cards, key=lambda x: x.rect.x).card
-                            if shot_card == game.kozir:
-                                pass
-                            else:
-                                shot_deck_name = game.get_involved_hand(shot_card).name
-                                if shot_deck_name == 'Player':
-                                    if game.first_round_user == 'Player' or game.first_round_user is None:
-                                        if shot_card not in game.all_hod_used_cards:
-                                            if not game.all_hod_used_cards:
+                            # if shot_card == game.kozir:
+                            #     pass
+                            # else:
+                            shot_deck_name = game.get_involved_hand(shot_card).name
+                            if shot_deck_name == 'Player':
+                                if game.first_round_user == 'Player' or game.first_round_user is None:
+                                    if shot_card not in game.all_hod_used_cards:
+                                        if not game.all_hod_used_cards:
+                                            game.attack_card(shot_card)
+                                            game.check_win()
+                                        else:
+                                            if shot_card.num in list(map(lambda x: x.num,
+                                                                         game.all_hod_used_cards)) and shot_card not in game.all_hod_used_cards:
                                                 game.attack_card(shot_card)
+                                                game.check_win()
                                             else:
-                                                if shot_card.num in list(map(lambda x: x.num, game.all_hod_used_cards)):
-                                                    game.attack_card(shot_card)
-                                                else:
-                                                    log_sprite.update(
-                                                        f'Картой {shot_card} '
-                                                        f'нельзя атаковать, так как она не сходна по достоинству с уже'
-                                                        f' выложенными картами.')
-                                                    fair_play = False
-                                            if fair_play:
-                                                log_sprite.update(f'Игрок атакует картой {shot_card}.')
-
-                                        else:
-                                            log_sprite.update(f'Картой {shot_card} уже ходили.')
-                                            fair_play = False
-                                        # Если первым ходил, игрок, то в раунде игрок будет только атаковать.
-                                    elif game.first_round_user == 'Pc':
-                                        pc_played_card = list(game.hod_dict.keys())[-1]
-                                        if shot_card not in game.all_hod_used_cards:
-                                            if shot_card > pc_played_card:
-                                                game.defend_card(shot_card)
-                                                log_sprite.update(
-                                                    f'Игрок защищается от {pc_played_card} картой {shot_card}.')
-                                            else:
-                                                log_sprite.update(f'Этой картой нельзя защититься.'
-                                                                  f' Она меньше по значению либо не подходит по масти.')
+                                                game.log_sprite.update(
+                                                    f'Картой {shot_card} '
+                                                    f'нельзя атаковать, так как она не сходна по достоинству с уже'
+                                                    f' выложенными картами.')
                                                 fair_play = False
+                                        if fair_play:
+                                            game.log_sprite.update(f'Игрок атакует картой {shot_card}.')
+                                    else:
+                                        game.log_sprite.update(f'Картой {shot_card} уже ходили.')
+                                        fair_play = False
+                                    # Если первым ходил, игрок, то в раунде игрок будет только атаковать.
+                                elif game.first_round_user == 'Pc':
+                                    pc_played_card = list(game.hod_dict.keys())[-1]
+                                    if shot_card not in game.all_hod_used_cards:
+                                        if shot_card > pc_played_card:
+                                            game.defend_card(shot_card)
+                                            game.log_sprite.update(
+                                                f'Игрок защищается от {pc_played_card} картой {shot_card}.')
+                                            game.check_win()
                                         else:
-                                            log_sprite.update(f'Картой {shot_card} уже ходили.')
+                                            game.log_sprite.update(f'Этой картой нельзя защититься.'
+                                                                   f' Она меньше по значению либо не подходит по масти.')
                                             fair_play = False
-                                else:
-                                    log_sprite.update('Вы не выбрали вашу карту')
-                                    fair_play = False
+                                    else:
+                                        game.log_sprite.update(f'Картой {shot_card} уже ходили.')
+                                        fair_play = False
+                            else:
+                                game.log_sprite.update('Вы не выбрали вашу карту')
+                                fair_play = False
                         if founded and not game.win:
                             if fair_play:
+                                game.check_win()
+
                                 # log_sprite.update('Игрок сходил')
                                 # print(f'Состояние раунда на данный момент: {game.hod_dict}')
                                 game.hodit = list(filter(lambda x: x.name != 'Player', game.hands))[0]
@@ -836,10 +861,11 @@ if __name__ == '__main__':
                                         random.randint(0, len(not_kozired_cards_to_attack) - 1)]
                                 else:
                                     card_to_attack = min(cards_to_attacks)
+
                                 game.attack_card(card_to_attack)
-                                log_sprite.update(f'Компьютер атакует картой {card_to_attack}.')
+                                game.log_sprite.update(f'Компьютер атакует картой {card_to_attack}.')
                             else:
-                                log_sprite.update(f'Компьютер говорит бито.')
+                                game.log_sprite.update(f'Компьютер говорит бито.')
                                 game.bito()
                                 game.begin_round()
                         else:
@@ -847,20 +873,27 @@ if __name__ == '__main__':
                             game.check_win()
 
                     elif game.first_round_user == 'Player':
-                        player_played_card = list(game.hod_dict.keys())[-1]
-                        possible_cards_to_defend = list(
-                            filter(lambda x: x > player_played_card and x not in game.all_hod_used_cards, game.pc_hand))
-                        if possible_cards_to_defend:
-                            card_to_defend = min(possible_cards_to_defend)
-                            game.defend_card(card_to_defend)
-                            log_sprite.update(f'Компьютер защищается от {player_played_card} картой {card_to_defend}.')
+                        if game.player_hand:
+                            print(game.hod_dict)
+                            player_played_card = list(game.hod_dict.keys())[-1]
+                            possible_cards_to_defend = list(
+                                filter(lambda x: x > player_played_card and x not in game.all_hod_used_cards,
+                                       game.pc_hand))
+                            if possible_cards_to_defend:
+                                card_to_defend = min(possible_cards_to_defend)
+                                game.defend_card(card_to_defend)
+                                game.log_sprite.update(
+                                    f'Компьютер защищается от {player_played_card} картой {card_to_defend}.')
+                            else:
+                                game.take(game.pc_hand)
+                                game.log_sprite.update(f'Компьютер берёт.')
+                                game.begin_round()
                         else:
-                            game.take(game.pc_hand)
-                            log_sprite.update(f'Компьютер берёт.')
-                            game.begin_round()
+                            game.check_win()
 
                     game.hodit = list(filter(lambda x: x.name != 'Pc', game.hands))[0]
                     game.draw_cards_who_played()
+                game.check_win()
 
             if game.win:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -873,18 +906,18 @@ if __name__ == '__main__':
                             if game.winner == 'Pc':
                                 PLAYER_FOOL_COUNT += 1
                                 if 2 <= PLAYER_FOOL_COUNT % 10 <= 4 and PLAYER_FOOL_COUNT // 10 % 2 == 0:
-                                    player_hand_name.update(f'Колода Player, дурак {PLAYER_FOOL_COUNT} раза.')
+                                    game.player_hand_name.update(f'Колода Player, дурак {PLAYER_FOOL_COUNT} раза.')
                                 else:
-                                    player_hand_name.update(f'Колода Player, дурак {PLAYER_FOOL_COUNT} раз.')
+                                    game.player_hand_name.update(f'Колода Player, дурак {PLAYER_FOOL_COUNT} раз.')
 
                             elif game.winner == 'Player':
                                 PC_FOOL_COUNT += 1
                                 if 2 <= PC_FOOL_COUNT % 10 <= 4 and PC_FOOL_COUNT // 10 % 2 == 0:
-                                    pc_hand_name.update(f'Колода Pc, дурак {PC_FOOL_COUNT} раза.')
+                                    game.pc_hand_name.update(f'Колода Pc, дурак {PC_FOOL_COUNT} раза.')
                                 else:
-                                    pc_hand_name.update(f'Колода Pc, дурак {PC_FOOL_COUNT} раз.')
+                                    game.pc_hand_name.update(f'Колода Pc, дурак {PC_FOOL_COUNT} раз.')
 
-                            make_new_game_button.update('')
+                            game.make_new_game_button.update('')
                             game.new_game()
 
         screen.fill(pygame.Color('black'))
