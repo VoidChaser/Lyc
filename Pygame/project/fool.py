@@ -622,11 +622,6 @@ class Game:
         self.winner = self.check_win()
         if self.winner:
             return
-        # if type(winer) is Hand:
-        #     losed = list(filter(lambda x: x.name != winer.name, self.hands))[0]
-        #     print(f'{winer.name} победил. {losed.name} остаётся в дураках.')
-        #     return
-        # return
         self.hod_dict = {}
         if not first_hod:
             self.hodit = list(filter(lambda x: x != self.hodit, self.hands))[0]
@@ -874,7 +869,7 @@ if __name__ == '__main__':
 
                     elif game.first_round_user == 'Player':
                         if game.player_hand:
-                            print(game.hod_dict)
+                            # print(game.hod_dict)
                             player_played_card = list(game.hod_dict.keys())[-1]
                             possible_cards_to_defend = list(
                                 filter(lambda x: x > player_played_card and x not in game.all_hod_used_cards,
